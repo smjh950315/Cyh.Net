@@ -8,4 +8,10 @@
     <PublishAot>true</PublishAot>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Native\" />
+    <Folder Include="Reflection\" />
+  </ItemGroup>
+
 </Project>
