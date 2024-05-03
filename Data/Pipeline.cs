@@ -18,10 +18,11 @@ namespace Cyh.Net.Data
                 return true;
             } catch (Exception ex) {
                 if (result != null) {
-                    result.Message = $"Exception: {ex.Message}," +
+                    result.Message = $"Exception: {ex.Message}"
 #if DEBUG
-                        $" InnerException: {ex.InnerException?.Message}";
+                        + $" InnerException: {ex.InnerException?.Message}"
 #endif
+                        ;
                 }
                 result?.OnFinish(false);
                 return false;

@@ -1,9 +1,7 @@
 using System.Reflection;
 
-namespace Cyh.Net.Reflection
-{
-    public static class ObjectHelper
-    {
+namespace Cyh.Net.Reflection {
+    public static class ObjectHelper {
         private static object? GetValue(object? instance, MemberInfo memberInfo) {
             if (memberInfo is PropertyInfo propertyInfo) {
                 return propertyInfo.GetValue(instance);
@@ -27,11 +25,9 @@ namespace Cyh.Net.Reflection
         private static MemberInfo? GetMemberInfo(Type type, string name, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All) {
             return type.GetMember(name, bindingFlags).FirstOrDefault();
         }
-
         private static MemberInfo? GetStaticMemberInfo(Type type, string name) {
             return GetMemberInfo(type, name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         }
-
         public static bool TryGetMember(object? obj, string name, out object? value) {
             if (name.IsNullOrEmpty() || obj == null) {
                 value = null;
@@ -84,9 +80,11 @@ namespace Cyh.Net.Reflection
             }
             return false;
         }
-
         public static bool HasStaticMember<T>(string name) {
             return GetStaticMemberInfo(typeof(T), name) != null;
+        }
+        public static IEnumerable<PropertyInfo> GetPropertiesOfCustomAttribute(Type type, Type attrType) {
+            return type.GetProperties().Where(p => p.IsDefined(attrType));
         }
     }
 }

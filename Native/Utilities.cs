@@ -1,16 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace Cyh.Net.Native
-{
+namespace Cyh.Net.Native {
     /// <summary>
-    /// 輔助原生資料相關操作的類別
+    /// The method collection to handle unmanaged resources
     /// </summary>
-    public unsafe static class Utilities
-    {
-        static delegate*<nuint, void*> _CustomAlloc;
-        static delegate*<void*, nuint, void*> _CustomRealloc;
-        static delegate*<void*, void> _CustomFree;
+    public unsafe static class Utilities {
+        static delegate*<nuint, void*> _CustomAlloc = null;
+        static delegate*<void*, nuint, void*> _CustomRealloc = null;
+        static delegate*<void*, void> _CustomFree = null;
         static void* __allocate(nuint size) {
             if (_CustomAlloc != null) {
                 return _CustomAlloc(size);
@@ -31,11 +29,11 @@ namespace Cyh.Net.Native
         }
 
         /// <summary>
-        /// 設定自訂的記憶體管理函數
+        /// Set custom memory allocation callbacks.
         /// </summary>
-        /// <param name="alloc">分配記憶體的函數</param>
-        /// <param name="realloc">調整記憶體大小的函數</param>
-        /// <param name="free">釋放記憶體的函數</param>
+        /// <param name="alloc">The function pointer to allocate memory.</param>
+        /// <param name="realloc">The function pointer to reallocate memory.</param>
+        /// <param name="free">The function pointer to free the allocated memory.</param>
         /// <exception cref="ArgumentException"></exception>
         public static void SetCustomMemCallback(delegate*<nuint, void*> alloc, delegate*<void*, nuint, void*> realloc, delegate*<void*, void> free) {
             if (alloc == null && realloc == null && free == null) { return; }
@@ -48,33 +46,33 @@ namespace Cyh.Net.Native
         }
 
         /// <summary>
-        /// 分配 大小為 <paramref name="size"/> 個 <typeparamref name="T"/> 的非託管的記憶體區塊
+        /// Allocate a unmanaged memory block with size of <typeparamref name="T"/> * <paramref name="count"/> bytes.
         /// </summary>
-        public static void* Allocate<T>(nuint size) {
+        public static void* Allocate<T>(nuint count) {
             // zero size : return nullptr
-            if (size == 0) { return null; }
-            return __allocate(size * (nuint)Marshal.SizeOf<T>());
+            if (count == 0) { return null; }
+            return __allocate(count * (nuint)Marshal.SizeOf<T>());
         }
 
         /// <summary>
-        /// 將已經分配的非託管的記憶體區塊調整大小到 <paramref name="size"/> 個 <typeparamref name="T"/>
+        /// Reallocate a unmanaged memory block to the size of <typeparamref name="T"/> * <paramref name="count"/> bytes.
         /// </summary>
-        public static void* Reallocate<T>(void* old, nuint size) {
+        public static void* Reallocate<T>(void* old, nuint count) {
             // old == nullptr : alloc directly
             if (old == null) {
-                return Allocate<T>(size * (nuint)Marshal.SizeOf<T>());
+                return Allocate<T>(count * (nuint)Marshal.SizeOf<T>());
             }
-            // size == 0 && old != nullptr : free directly
-            if (size == 0) {
+            // count == 0 && old != nullptr : free directly
+            if (count == 0) {
                 __free(old);
                 return null;
             }
-            // size != 0 && old != nullptr : reallocate
-            return __realloc(old, size * (nuint)Marshal.SizeOf<T>());
+            // count != 0 && old != nullptr : reallocate
+            return __realloc(old, count * (nuint)Marshal.SizeOf<T>());
         }
 
         /// <summary>
-        /// 釋放已分配的非託管記憶體區塊
+        /// Free the unmanaged memory block.
         /// </summary>
         /// <param name="ptr"></param>
         public static void Free(void* ptr) {
@@ -84,77 +82,77 @@ namespace Cyh.Net.Native
         }
 
         /// <summary>
-        /// 分配 <paramref name="size"/>個 byte 的非託管記憶體區塊
+        /// Allocate a unmanaged memory block with <paramref name="size"/> bytes.
         /// </summary>
         public static void* Allocate(nuint size) => Allocate<byte>(size);
 
         /// <summary>
-        /// 將已經分配的非託管的記憶體區塊調整大小到 <paramref name="size"/> 個 byte
+        /// Reallocate a unmanaged memory block to <paramref name="size"/> bytes.
         /// </summary>
         public static void* Reallocate(void* old, nuint size) => Reallocate<byte>(old, size);
 
         /// <summary>
-        /// 是否是有效的指標
+        /// Indicate whether the pointer is valid.
         /// </summary>
-        /// <param name="addr">指標</param>
-        /// <returns>指標是否有效</returns>
+        /// <param name="addr">pointer</param>
+        /// <returns>Return true if the pointer input is valid.</returns>
         private static bool IsValidAddress([NotNullWhen(true)] void* addr) => addr != null;
 
         /// <summary>
-        /// 當指標為空的時候丟出例外
+        /// Throw an exception if the pointer is null.
         /// </summary>
-        /// <param name="addr">指標</param>
+        /// <param name="addr">pointer</param>
         /// <exception cref="ArgumentNullException"></exception>
         private static void ThrowNullPointer([NotNull] void* addr) {
             if (addr == null) { throw new ArgumentNullException(nameof(addr)); }
         }
 
         /// <summary>
-        /// 將指標的位址偏移到 <paramref name="offset"/> 個物件  <typeparamref name="T"/> 的位址
+        /// Get the pointer of the value at the offset of the pointer.
         /// </summary>
-        /// <param name="addr">偏移開始的位址</param>
-        /// <param name="offset">偏移量</param>
-        /// <returns>偏移後的指標</returns>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns>Pointer after shifting.</returns>
         public static void* Shift<T>(void* addr, int offset) where T : unmanaged {
             ThrowNullPointer(addr);
             return (T*)addr + offset;
         }
 
         /// <summary>
-        /// 將指標的位址偏移到 <paramref name="offset"/> 個物件  <typeparamref name="T"/> 的位址，並以 <typeparamref name="T"/>* 的形式取得指向該位址的指標
+        /// Get the pointer of the value at the offset of the pointer.
         /// </summary>
-        /// <param name="addr">偏移開始的位址</param>
-        /// <param name="offset">偏移量</param>
-        /// <returns>偏移後的指標 <typeparamref name="T"/>*</returns>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns><typeparamref name="T"/>* after shifting.</returns>
         public static T* GetValuePtr<T>(void* addr, int offset) where T : unmanaged {
             ThrowNullPointer(addr);
             return (T*)Shift<T>(addr, offset);
         }
 
         /// <summary>
-        /// 將指標的位址偏移到 <paramref name="offset"/> 個物件  <typeparamref name="T"/> 的位址，並將該位址的物件值設定為 <paramref name="value"/>
+        /// Set the value at the offset of the pointer.
         /// </summary>
-        /// <param name="addr">偏移開始的位址</param>
-        /// <param name="offset">偏移量</param>
-        /// <param name="value">要設定的值</param>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <param name="value">The value to set to the memory.</param>
         public static void SetValue<T>(void* addr, int offset, T value) where T : unmanaged {
             *GetValuePtr<T>(addr, offset) = value;
         }
 
         /// <summary>
-        /// 將指標的位址偏移到 <paramref name="offset"/> 個物件  <typeparamref name="T"/> 的位址，並取得該位址的儲存的值
+        /// Get the value at the offset of the pointer.
         /// </summary>
-        /// <param name="addr">偏移開始的位址</param>
-        /// <param name="offset">偏移量</param>
-        /// <returns>偏移後的位址的儲存的值</returns>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns>The value on the memory offset.</returns>
         public static T GetValue<T>(void* addr, int offset) where T : unmanaged {
             return *GetValuePtr<T>(addr, offset);
         }
 
         /// <summary>
-        /// 以Byte為單位來比較兩個記憶體位置特定長度的資料是否相等
+        /// Compare two memory blocks in bytes.
         /// </summary>
-        /// <returns>是否相等</returns>
+        /// <returns>Whether same in bytes</returns>
         public static bool IsBytesEqual(void* lhs, void* rhs, int byteLength) {
             if (byteLength == 0) return true;
             if (lhs == null && rhs == null) return true;
@@ -170,7 +168,7 @@ namespace Cyh.Net.Native
         }
 
         /// <summary>
-        /// 從指標取得特定類型的託管陣列
+        /// Get the managed array from the unmanaged memory block.
         /// </summary>
         public static bool GetManagedArray<T>(void* src, ulong length, out T[] array) where T : unmanaged {
             if (length == 0) {

@@ -20,6 +20,7 @@ namespace Cyh.Net.Data.Extension
             dataSource = dto.DataSource;
             return true;
         }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ShouldReturn<T, V>(this IDTOHelper<T, V> dto, [NotNullWhen(false)] V? view, [NotNull] ref DataTransResult? result, bool exec_now, [NotNullWhen(false)] out IMyDataSource<T>? dataSource) {
             if (result != null) {
@@ -49,16 +50,36 @@ namespace Cyh.Net.Data.Extension
             }
         }
 
+        /// <summary>
+        /// Try to add a new data to the data source via extern data type.
+        /// </summary>
+        /// <typeparam name="T">Inner data type.</typeparam>
+        /// <typeparam name="V">Extern data type.</typeparam>
+        /// <param name="dto"></param>
+        /// <param name="view"></param>
+        /// <param name="result"></param>
+        /// <param name="exec_now"></param>
+        /// <returns>Execute result.</returns>
         public static DataTransResult TryAdd<T, V>(this IDTOHelper<T, V> dto, V? view, DataTransResult? result, bool exec_now) {
             if (ShouldReturn(dto, view, ref result, exec_now, out IMyDataSource<T>? dataSource)) { return result; }
             dataSource.AddSingle(dto.GetExprToData().Compile(), view, result, exec_now);
             return result;
         }
+
+        /// <summary>
+        /// Try to update an existing data in the data source via extern data type.
+        /// </summary>
+        /// <typeparam name="T">Inner data type.</typeparam>
+        /// <typeparam name="V">Extern data type.</typeparam>
+        /// <param name="dto"></param>
+        /// <param name="view"></param>
+        /// <param name="result"></param>
+        /// <param name="exec_now"></param>
+        /// <returns>Execute result.</returns>
         public static DataTransResult TryUpdate<T, V>(this IDTOHelper<T, V> dto, V? view, DataTransResult? result, bool exec_now) {
             if (ShouldReturn(dto, view, ref result, exec_now, out IMyDataSource<T>? dataSource)) { return result; }
             dataSource.UpdateFromSingle(dto.UpdateToData, view, dto.GetExprToFindData(view), result, exec_now);
             return result;
         }
-
     }
 }

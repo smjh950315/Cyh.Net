@@ -22,9 +22,9 @@ namespace Cyh.Net.Data
         internal static Expression<Func<TView, TData>>? _Expr_ConvertToData;
         internal static Func<TView, Expression<Func<TData, bool>>>? _Callback_GetExprFindData;
         internal static Func<TView, TData, int>? _Callback_UpdateData;
-        public IDataSourceActivator Activator { get; set; }
+        public IDataSourceGenerator Activator { get; set; }
         public IMyDataSource<TData>? DataSource { get; set; }
-        internal DataRepository(IDataSourceActivator activator) { this.Activator = activator; }
+        internal DataRepository(IDataSourceGenerator activator) { this.Activator = activator; }
 
         public bool Any(Expression<Func<TView, bool>>? predicate, DataTransResult? result) {
             return this.HasAny(predicate);
