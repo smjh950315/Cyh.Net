@@ -1,10 +1,8 @@
 using Cyh.Net.Data.Models;
 using System.Linq.Expressions;
 
-namespace Cyh.Net.Data
-{
-    public interface IDataRepository<T>
-    {
+namespace Cyh.Net.Data {
+    public interface IDataRepository<T> {
         /// <summary>
         /// Determines whether exist an element satisfies the input condition.
         /// </summary>

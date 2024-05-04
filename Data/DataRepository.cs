@@ -2,10 +2,8 @@ using Cyh.Net.Data.Extension;
 using Cyh.Net.Data.Models;
 using System.Linq.Expressions;
 
-namespace Cyh.Net.Data
-{
-    public class DataRepository
-    {
+namespace Cyh.Net.Data {
+    public class DataRepository {
         public static IDataRepository<V>? GetDataRepository<T, V>(DTOArguments<T, V> args) {
             Lib.ThrowNull(args, args.Activator);
             Lib.ThrowNull(args.Activator, args.ExprConvertToView, args.ExprConvertToData, args.CallbackUpdateData);
@@ -16,8 +14,7 @@ namespace Cyh.Net.Data
             return new DataRepository<T, V>(args.Activator);
         }
     }
-    public class DataRepository<TData, TView> : IDTOHelper<TData, TView>
-    {
+    public class DataRepository<TData, TView> : IDTOHelper<TData, TView> {
         internal static Expression<Func<TData, TView>>? _Expr_ConvertToView;
         internal static Expression<Func<TView, TData>>? _Expr_ConvertToData;
         internal static Func<TView, Expression<Func<TData, bool>>>? _Callback_GetExprFindData;

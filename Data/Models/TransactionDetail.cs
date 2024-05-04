@@ -1,9 +1,7 @@
 using Cyh.Net.Data.Logs;
 
-namespace Cyh.Net.Data.Models
-{
-    public class TransactionDetail
-    {
+namespace Cyh.Net.Data.Models {
+    public class TransactionDetail {
         internal TransactionDetail() { }
 
         /// <summary>

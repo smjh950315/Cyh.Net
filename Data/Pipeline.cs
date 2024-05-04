@@ -2,10 +2,8 @@
 using Cyh.Net.Data.Logs;
 using Cyh.Net.Data.Models;
 
-namespace Cyh.Net.Data
-{
-    public static class Pipeline
-    {
+namespace Cyh.Net.Data {
+    public static class Pipeline {
         public static unsafe bool SaveResult<T>(delegate*<T, void> save, T? saver, DataTransResult? result) {
             if (saver == null) {
                 result?.OnTransact(Data.Logs.FAILURE_REASON.INV_SRCS);

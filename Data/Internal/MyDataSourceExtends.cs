@@ -1,13 +1,11 @@
 using Cyh.Net.Data.Models;
 
-namespace Cyh.Net.Data.Internal
-{
+namespace Cyh.Net.Data.Internal {
     using Cyh.Net.Data.Logs;
     using System.Linq.Expressions;
     using System.Runtime.CompilerServices;
 
-    internal static class MyDataSourceExtends
-    {
+    internal static class MyDataSourceExtends {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static T? First<T>(IQueryable<T> values, Expression<Func<T, bool>>? filter_expr) {
             if (filter_expr == null) {

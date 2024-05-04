@@ -1,10 +1,8 @@
-namespace Cyh.Net.Data.Models
-{
+namespace Cyh.Net.Data.Models {
     /// <summary>
     /// Determines a range of data to fetch
     /// </summary>
-    public class DataRange
-    {
+    public class DataRange {
         /// <summary>
         /// Begin index of data in sequence.
         /// </summary>

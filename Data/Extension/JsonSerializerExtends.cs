@@ -1,9 +1,7 @@
 using System.Text.Json;
 
-namespace Cyh.Net.Data.Extension
-{
-    public static class JsonSerializerExtends
-    {
+namespace Cyh.Net.Data.Extension {
+    public static class JsonSerializerExtends {
         /// <summary>
         /// 將輸入可能是Json的物件反序列化為目標模型
         /// </summary>

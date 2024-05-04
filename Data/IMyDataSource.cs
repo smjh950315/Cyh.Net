@@ -1,17 +1,14 @@
 using Cyh.Net.Data.Models;
 
-namespace Cyh.Net.Data
-{
-    public interface IMyDataSource
-    {
+namespace Cyh.Net.Data {
+    public interface IMyDataSource {
         bool TryAdd(object? @object, DataTransResult? transResult, bool exec_now);
 
         bool TryUpdate(object? @object, DataTransResult? transResult, bool exec_now);
 
         bool ApplyChanges(DataTransResult? transResult);
     }
-    public interface IMyDataSource<T> : IMyDataSource
-    {
+    public interface IMyDataSource<T> : IMyDataSource {
         IQueryable<T>? Queryable { get; }
 
         /// <summary>

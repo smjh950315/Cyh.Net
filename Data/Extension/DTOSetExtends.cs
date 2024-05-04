@@ -4,10 +4,8 @@ using Cyh.Net.Data.Models;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Cyh.Net.Data.Extension
-{
-    public static class DTOSetExtends
-    {
+namespace Cyh.Net.Data.Extension {
+    public static class DTOSetExtends {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryActivate<T>(this IDTOHelper<T> dto, [NotNullWhen(true)] out IMyDataSource<T>? dataSource) {
             if (dto.DataSource == null) {
@@ -20,7 +18,7 @@ namespace Cyh.Net.Data.Extension
             dataSource = dto.DataSource;
             return true;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ShouldReturn<T, V>(this IDTOHelper<T, V> dto, [NotNullWhen(false)] V? view, [NotNull] ref DataTransResult? result, bool exec_now, [NotNullWhen(false)] out IMyDataSource<T>? dataSource) {
             if (result != null) {

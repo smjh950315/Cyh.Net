@@ -1,6 +1,4 @@
-﻿namespace Cyh.Net.Data
-{
-    public interface IJsonSerializer
-    {
+﻿namespace Cyh.Net.Data {
+    public interface IJsonSerializer {
     }
 }
