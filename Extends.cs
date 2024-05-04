@@ -2,10 +2,8 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Cyh.Net
-{
-    public static class Extends
-    {
+namespace Cyh.Net {
+    public static class Extends {
         /// <summary>
         /// Determines whether the specified value is null or empty.
         /// </summary>

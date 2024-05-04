@@ -1,14 +1,12 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Cyh.Net.Native
-{
+namespace Cyh.Net.Native {
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public unsafe struct Utf8String
         : IEquatable<string>
-        , IDisposable
-    {
+        , IDisposable {
         void* _Chars;
         nuint _Length;
 

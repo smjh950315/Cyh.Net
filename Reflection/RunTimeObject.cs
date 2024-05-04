@@ -1,7 +1,5 @@
-namespace Cyh.Net.Reflection
-{
-    public class RunTimeObject : System.Dynamic.DynamicObject
-    {
+namespace Cyh.Net.Reflection {
+    public class RunTimeObject : System.Dynamic.DynamicObject {
         private System.Collections.Generic.Dictionary<string, object?>? _PROPERTIES;
         private System.Collections.Generic.Dictionary<string, object?> _Properties {
             get {
