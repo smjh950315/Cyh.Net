@@ -127,7 +127,7 @@ namespace Cyh.Net.Data.Internal {
             DataTransResult? result,
             bool exec_now) {
             if (value == null) {
-                result?.OnTransact(FAILURE_REASON.INV_DATA);
+                result?.OnTransact(FAILURE_TYPE.INV_DATA);
                 return false;
             }
             return dataSource.TryAdd(converter(value), result, exec_now);
@@ -140,11 +140,11 @@ namespace Cyh.Net.Data.Internal {
             DataTransResult? result,
             bool exec_now) {
             if (dataSource.Queryable == null) {
-                result?.OnTransact(FAILURE_REASON.INV_SRCS);
+                result?.OnTransact(FAILURE_TYPE.INV_SRCS);
                 return false;
             }
             if (value == null) {
-                result?.OnTransact(FAILURE_REASON.INV_DATA);
+                result?.OnTransact(FAILURE_TYPE.INV_DATA);
                 return false;
             }
             List<T> updating_list = dataSource.Queryable.Where(findmatch_expr).ToList();
@@ -154,7 +154,7 @@ namespace Cyh.Net.Data.Internal {
                 }
                 return dataSource.TryUpdate(updating_list, result, exec_now);
             } else {
-                result?.OnTransact(FAILURE_REASON.INV_DATA);
+                result?.OnTransact(FAILURE_TYPE.INV_DATA);
                 return false;
             }
         }

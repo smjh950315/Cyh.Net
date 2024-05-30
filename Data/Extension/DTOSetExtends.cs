@@ -36,10 +36,10 @@ namespace Cyh.Net.Data.Extension {
 
             if (exec_now) {
                 if (!TryActivate(dto, out dataSource)) {
-                    result.OnTransact(FAILURE_REASON.INV_SRCS);
+                    result.OnTransact(FAILURE_TYPE.INV_SRCS);
                     return true;
                 }
-                result.OnTransact(FAILURE_REASON.INV_DATA);
+                result.OnTransact(FAILURE_TYPE.INV_DATA);
                 bool is_succeed = dataSource.ApplyChanges(result);
                 result.OnFinish(is_succeed);
                 return true;

@@ -6,31 +6,65 @@ namespace Cyh.Net.Data.Models {
     /// Results of data transaction.
     /// </summary>
     public class DataTransResult {
+
         private List<TransactionDetail>? _Details;
 
+        /// <summary>
+        /// [Only use when apply rollback machanism]Change the FailedReason mark of details from NOT_SAVED to ROLL_BACK.
+        /// </summary>
+        private static void on_rollback(List<TransactionDetail> details) {
+            foreach (TransactionDetail detail in details) {
+                if (detail.FailedReason == FAILURE_TYPE.NOT_SAVED) {
+                    detail.FailedReason = FAILURE_TYPE.ROLL_BACK;
+                }
+            }
+        }
+
+        /// <summary>
+        /// [Only use when apply rollback machanism]Change the FailedReason mark of details from NOT_SAVED to NONE.
+        /// </summary>
+        private static void on_save(List<TransactionDetail> details, DateTime end_time) {
+            foreach (TransactionDetail detail in details) {
+                if (detail.FailedReason == FAILURE_TYPE.NOT_SAVED) {
+                    detail.FailedReason = FAILURE_TYPE.NONE;
+                }
+            }
+        }
+
+        private TransactionDetail CreateDetail(string? msg = null) {
+            var index = this.Details.Count;
+            return new TransactionDetail {
+                Index = index,
+                Message = msg
+            };
+        }
+
+        /// <summary>
+        /// Mark all NOT_SAVED transaction to succeed state and finish the transactions.
+        /// <para>This function will and should be call internally when current batch of transaction is finished.</para>
+        /// </summary>
         private void OnSucceess() {
             if (this.IsFinished) { return; }
             this.EndTime = DateTime.Now;
             this.IsFinished = true;
             if (this._Details != null) {
-                foreach (TransactionDetail detail in this._Details) {
-                    detail.IsSaved = true;
-                    detail.Saved = this.EndTime;
-                    detail.FailedReason = FAILURE_REASON.NONE;
+                if (this.UseRollback) {
+                    on_save(this._Details, this.EndTime);
                 }
             }
         }
+
+        /// <summary>
+        /// Mark all NOT_SAVED transaction to falied state and finish the transactions.
+        /// <para>This function will and should be call internally when current batch of transaction is finished.</para>
+        /// </summary>
         private void OnFail() {
             if (this.IsFinished) { return; }
             this.EndTime = DateTime.Now;
             this.IsFinished = true;
             if (this._Details != null) {
                 if (this.UseRollback) {
-                    foreach (TransactionDetail detail in this._Details) {
-                        if (detail.FailedReason == FAILURE_REASON.NOT_SAVED) {
-                            detail.FailedReason = FAILURE_REASON.ROLL_BACK;
-                        }
-                    }
+                    on_rollback(this._Details);
                 }
             }
         }
@@ -45,19 +79,15 @@ namespace Cyh.Net.Data.Models {
         /// <summary>
         /// Log a transaction to details
         /// </summary>
-        /// <param name="reason"></param>
         /// <param name="message"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int OnTransact(FAILURE_REASON reason = FAILURE_REASON.NOT_SAVED, string? message = null) {
+        public int OnTransact(FAILURE_TYPE reason, string? message = null) {
+            if (this.IsFinished) {
+                throw new InvalidOperationException("Current transaction is finished and should not be used anymore!");
+            }
             int index = this.TotalCount;
-            this.Details.Add(new TransactionDetail {
-                Index = index,
-                IsInvoked = true,
-                Invoked = DateTime.Now,
-                FailedReason = reason,
-                Message = message,
-            });
+            this.CreateDetail(message).OnProcess(reason);
             if (!reason.Ignorable()) {
                 this.OnFinish(false);
             }

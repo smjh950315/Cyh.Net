@@ -6,7 +6,7 @@ namespace Cyh.Net.Data {
     public static class Pipeline {
         public static unsafe bool SaveResult<T>(delegate*<T, void> save, T? saver, DataTransResult? result) {
             if (saver == null) {
-                result?.OnTransact(Data.Logs.FAILURE_REASON.INV_SRCS);
+                result?.OnTransact(Data.Logs.FAILURE_TYPE.INV_SRCS);
                 result?.OnFinish(false);
                 return false;
             }
@@ -30,11 +30,11 @@ namespace Cyh.Net.Data {
         private static NEXT_ACTION GetNextAction<T, U, V>(T? source, U? data, V? saver, DataTransResult? result) {
             NEXT_ACTION retVal = NEXT_ACTION.NORM;
             if (data == null) {
-                result?.OnTransact(FAILURE_REASON.INV_DATA);
+                result?.OnTransact(FAILURE_TYPE.INV_DATA);
                 retVal = NEXT_ACTION.PASS;
             }
             if (source == null || saver == null) {
-                result?.OnTransact(FAILURE_REASON.INV_SRCS);
+                result?.OnTransact(FAILURE_TYPE.INV_SRCS);
                 retVal = NEXT_ACTION.HALT;
             }
             return retVal;
