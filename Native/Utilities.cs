@@ -170,7 +170,7 @@ namespace Cyh.Net.Native {
         /// <summary>
         /// Get the managed array from the unmanaged memory block.
         /// </summary>
-        public static bool GetManagedArray<T>(void* src, ulong length, out T[] array) where T : unmanaged {
+        public static bool GetManagedArray<T>(void* src, ulong length,[NotNull] out T[]? array) where T : unmanaged {
             if (length == 0) {
                 array = Array.Empty<T>();
                 return false;
