@@ -6,6 +6,7 @@ namespace Cyh.Net.Native {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public unsafe struct Utf8String
         : IEquatable<string>
+        , IEquatable<Utf8String>
         , IDisposable {
 
         void* m_chars;
