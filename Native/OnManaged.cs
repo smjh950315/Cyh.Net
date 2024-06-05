@@ -1,16 +1,16 @@
 namespace Cyh.Net.Native {
     public abstract unsafe class OnManaged : IDisposable {
-        protected void* _Instance;
-        private bool disposedValue;
+        protected void* m_instance;
+        private bool m_disposed;
 
         protected abstract void Release();
 
         protected virtual void Dispose(bool disposing) {
-            if (!this.disposedValue) {
+            if (!this.m_disposed) {
                 if (disposing) { }
                 this.Release();
-                this._Instance = null;
-                this.disposedValue = true;
+                this.m_instance = null;
+                this.m_disposed = true;
             }
         }
 
