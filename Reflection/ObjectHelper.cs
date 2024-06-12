@@ -17,6 +17,7 @@ namespace Cyh.Net.Reflection {
             } else if (memberInfo is FieldInfo fieldInfo) {
                 fieldInfo.SetValue(instance, value);
             } else {
+                throw new InvalidOperationException("nuknow member information");
             }
         }
         private static MemberInfo[] GetMemberInfos(Type type, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All) {
@@ -28,34 +29,42 @@ namespace Cyh.Net.Reflection {
         private static MemberInfo? GetStaticMemberInfo(Type type, string name) {
             return GetMemberInfo(type, name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         }
-        public static bool TryGetMember(object? obj, string name, out object? value) {
+
+        /// <summary>
+        /// Get value of member named <paramref name="name"/> in <paramref name="obj"/>
+        /// </summary>
+        public static bool TryGetMember(object? obj, string name, out object? output) {
             if (name.IsNullOrEmpty() || obj == null) {
-                value = null;
+                output = null;
                 return false;
             } else {
                 MemberInfo? mi = GetMemberInfo(obj.GetType(), name);
                 try {
                     if (mi != null) {
-                        value = GetValue(obj, mi);
+                        output = GetValue(obj, mi);
                         return true;
                     } else {
-                        value = null;
+                        output = null;
                         return false;
                     }
                 } catch {
-                    value = null;
+                    output = null;
                     return false;
                 }
             }
         }
-        public static bool TrySetMember(object? obj, string name, object? value) {
+
+        /// <summary>
+        /// Set value of member named <paramref name="name"/> in <paramref name="obj"/>
+        /// </summary>
+        public static bool TrySetMember(object? obj, string name, object? input) {
             if (name.IsNullOrEmpty() || obj == null) {
                 return false;
             } else {
                 MemberInfo? mi = GetMemberInfo(obj.GetType(), name);
                 try {
                     if (mi != null) {
-                        SetValue(obj, value, mi);
+                        SetValue(obj, input, mi);
                         return true;
                     } else {
                         return false;
@@ -65,6 +74,45 @@ namespace Cyh.Net.Reflection {
                 }
             }
         }
+
+        /// <summary>
+        /// Get value of member match the <paramref name="info"/> in <paramref name="obj"/>
+        /// </summary>
+        public static bool TryGetMember(object? obj, MemberInfo? info, out object? output) {
+            output = null;
+            if (obj == null || info == null) { return false; }
+            try {
+                if (info != null) {
+                    output = GetValue(obj, info);
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Set value of member match the <paramref name="info"/> in <paramref name="obj"/>
+        /// </summary>
+        public static bool TrySetMember(object? obj, MemberInfo? info, object? input) {
+            if (obj == null || info == null) { return false; }
+            try {
+                if (info != null) {
+                    SetValue(obj, input, info);
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get value of static member named <paramref name="name"/> in <typeparamref name="T"/>
+        /// </summary>
         public static object? GetStaticMember<T>(string name) {
             MemberInfo? member = GetStaticMemberInfo(typeof(T), name);
             if (member != null) {
@@ -72,6 +120,10 @@ namespace Cyh.Net.Reflection {
             }
             return default;
         }
+
+        /// <summary>
+        /// Set value of static member named <paramref name="name"/> in <typeparamref name="T"/> to <paramref name="value"/>
+        /// </summary>
         public static bool SetStaticMember<T>(string name, object? value) {
             MemberInfo? member = GetStaticMemberInfo(typeof(T), name);
             if (member != null) {
@@ -80,9 +132,17 @@ namespace Cyh.Net.Reflection {
             }
             return false;
         }
+
+        /// <summary>
+        /// Indicate whether exist a static member named <paramref name="name"/> in <typeparamref name="T"/>
+        /// </summary>
         public static bool HasStaticMember<T>(string name) {
             return GetStaticMemberInfo(typeof(T), name) != null;
         }
+
+        /// <summary>
+        /// Get the member informations with custom attribute of <paramref name="attrType"/>
+        /// </summary>
         public static IEnumerable<PropertyInfo> GetPropertiesOfCustomAttribute(Type type, Type attrType) {
             return type.GetProperties().Where(p => p.IsDefined(attrType));
         }
