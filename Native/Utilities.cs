@@ -6,24 +6,24 @@ namespace Cyh.Net.Native {
     /// The method collection to handle unmanaged resources
     /// </summary>
     public unsafe static class Utilities {
-        static delegate*<nuint, void*> _CustomAlloc = null;
-        static delegate*<void*, nuint, void*> _CustomRealloc = null;
-        static delegate*<void*, void> _CustomFree = null;
+        static delegate*<nuint, void*> m_customAllocCallback = null;
+        static delegate*<void*, nuint, void*> m_customReallocCallback = null;
+        static delegate*<void*, void> m_customFreeCallback = null;
         static void* __allocate(nuint size) {
-            if (_CustomAlloc != null) {
-                return _CustomAlloc(size);
+            if (m_customAllocCallback != null) {
+                return m_customAllocCallback(size);
             }
             return (void*)Marshal.AllocHGlobal((int)size);
         }
         static void* __realloc(void* old, nuint size) {
-            if (_CustomRealloc != null) {
-                return _CustomRealloc(old, size);
+            if (m_customReallocCallback != null) {
+                return m_customReallocCallback(old, size);
             }
             return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (int)size);
         }
         static void __free(void* ptr) {
-            if (_CustomFree != null) {
-                _CustomFree(ptr);
+            if (m_customFreeCallback != null) {
+                m_customFreeCallback(ptr);
             }
             Marshal.FreeHGlobal((IntPtr)ptr);
         }
@@ -38,9 +38,9 @@ namespace Cyh.Net.Native {
         public static void SetCustomMemCallback(delegate*<nuint, void*> alloc, delegate*<void*, nuint, void*> realloc, delegate*<void*, void> free) {
             if (alloc == null && realloc == null && free == null) { return; }
             if (alloc != null && realloc != null && free != null) {
-                _CustomAlloc = alloc;
-                _CustomRealloc = realloc;
-                _CustomFree = free;
+                m_customAllocCallback = alloc;
+                m_customReallocCallback = realloc;
+                m_customFreeCallback = free;
             }
             throw new ArgumentException("custom callbacks : alloc, realloc and free should be set together!");
         }
