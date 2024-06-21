@@ -25,7 +25,7 @@
 
                 unsafe {
                     if (this.m_release_callback != null && this.m_data_address != null) {
-                        if(*this.m_data_address != null) {
+                        if (*this.m_data_address != null) {
                             this.m_release_callback(*this.m_data_address);
                             *this.m_data_address = null;
                         }

@@ -9,6 +9,7 @@ namespace Cyh.Net.Native {
         static delegate*<nuint, void*> _CustomAlloc = null;
         static delegate*<void*, nuint, void*> _CustomRealloc = null;
         static delegate*<void*, void> _CustomFree = null;
+
         static void* __allocate(nuint size) {
             if (_CustomAlloc != null) {
                 return _CustomAlloc(size);
@@ -170,7 +171,7 @@ namespace Cyh.Net.Native {
         /// <summary>
         /// Get the managed array from the unmanaged memory block.
         /// </summary>
-        public static bool GetManagedArray<T>(void* src, ulong length,[NotNull] out T[]? array) where T : unmanaged {
+        public static bool GetManagedArray<T>(void* src, ulong length, [NotNull] out T[]? array) where T : unmanaged {
             if (length == 0) {
                 array = Array.Empty<T>();
                 return false;
@@ -184,6 +185,47 @@ namespace Cyh.Net.Native {
             } catch {
                 array = Array.Empty<T>();
                 return false;
+            }
+        }
+
+        public static IEnumerable<byte> GetBytesOfLsb<T>(ref T value) where T : unmanaged {
+            int typeSize = sizeof(T);
+            byte[] result = new byte[typeSize];
+            fixed (T* addr = &value) {
+                byte* byteField = (byte*)addr;
+                if (BitConverter.IsLittleEndian) {
+                    for (int i = 0; i < typeSize; i++) {
+                        result[i] = byteField[i];
+                    }
+                } else {
+                    for (int i = 0; i < typeSize; i++) {
+                        result[i] = byteField[typeSize - i];
+                    }
+                }
+            }
+            return result;
+        }
+        public static void SetByteOfLsbIndex<T>(ref T src, int index, byte value) where T : unmanaged {
+            int typeSize = sizeof(T);
+            if (index < 0 || index > typeSize) throw new ArgumentOutOfRangeException(nameof(index));
+            fixed (T* addr = &src) {
+                byte* byteField = (byte*)addr;
+                if (BitConverter.IsLittleEndian) {
+                    byteField[index] = value;
+                } else {
+                    byteField[typeSize - index] = value;
+                }
+            }
+        }
+        public static byte GetByteOfLsbIndex<T>(ref T src, int index) where T : unmanaged {
+            int typeSize = sizeof(T);
+            fixed (T* addr = &src) {
+                byte* byteField = (byte*)addr;
+                if (BitConverter.IsLittleEndian) {
+                    return byteField[index];
+                } else {
+                    return byteField[sizeof(ulong) - index];
+                }
             }
         }
     }

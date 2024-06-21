@@ -143,8 +143,15 @@ namespace Cyh.Net.Reflection {
         /// <summary>
         /// Get the member informations with custom attribute of <paramref name="attrType"/>
         /// </summary>
-        public static IEnumerable<PropertyInfo> GetPropertiesOfCustomAttribute(Type type, Type attrType) {
+        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute(Type type, Type attrType) {
             return type.GetProperties().Where(p => p.IsDefined(attrType));
+        }
+
+        /// <summary>
+        /// Get the member informations with custom attribute of <typeparamref name="T"/>
+        /// </summary>
+        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute<T>(Type type) {
+            return type.GetProperties().Where(p => p.IsDefined(typeof(T)));
         }
     }
 }
