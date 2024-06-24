@@ -150,6 +150,30 @@ namespace Cyh.Net.Native {
         }
 
         /// <summary>
+        /// Set the value at the offset of the pointer.
+        /// </summary>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <param name="value">The value to set to the memory.</param>
+        public static void SetValueByteField<T>(void* addr, int offset, T value) where T : unmanaged {
+            void* _addr = Shift<T>(addr, offset);
+            Buffer.MemoryCopy(&value, _addr, sizeof(T), sizeof(T));
+        }
+
+        /// <summary>
+        /// Get the value at the offset of the pointer.
+        /// </summary>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns>The value on the memory offset.</returns>
+        public static T GetValueByteField<T>(void* addr, int offset) where T : unmanaged {
+            T result = default;
+            void* _addr = Shift<T>(addr, offset);
+            Buffer.MemoryCopy(_addr, &result, sizeof(T), sizeof(T));
+            return result;
+        }
+
+        /// <summary>
         /// Compare two memory blocks in bytes.
         /// </summary>
         /// <returns>Whether same in bytes</returns>
@@ -204,6 +228,7 @@ namespace Cyh.Net.Native {
             }
             return result;
         }
+
         public static void SetByteOfLsbIndex<T>(ref T src, int index, byte value) where T : unmanaged {
             int typeSize = sizeof(T);
             if (index < 0 || index > typeSize) throw new ArgumentOutOfRangeException(nameof(index));
@@ -216,6 +241,7 @@ namespace Cyh.Net.Native {
                 }
             }
         }
+
         public static byte GetByteOfLsbIndex<T>(ref T src, int index) where T : unmanaged {
             int typeSize = sizeof(T);
             fixed (T* addr = &src) {
@@ -227,5 +253,64 @@ namespace Cyh.Net.Native {
                 }
             }
         }
+
+#pragma warning disable CS8500, CS8600, CS8603
+
+        /// <summary>
+        /// Get the pointer of the value at the offset of the pointer.
+        /// </summary>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns>Pointer after shifting.</returns>
+        public static void* Shift_Unchecked<T>(void* addr, int offset) {
+            ThrowNullPointer(addr);
+            return (T*)addr + offset;
+        }
+
+        /// <summary>
+        /// Set the value at the offset of the pointer.
+        /// </summary>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <param name="value">The value to set to the memory.</param>
+        public static void SetValueByteField_Unchecked<T>(void* addr, int offset, T value) {
+            void* _addr = Shift_Unchecked<T>(addr, offset);
+            Buffer.MemoryCopy(&value, _addr, sizeof(T), sizeof(T));
+        }
+
+        /// <summary>
+        /// Get the value at the offset of the pointer.
+        /// </summary>
+        /// <param name="addr">The origin pointer.</param>
+        /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
+        /// <returns>The value on the memory offset.</returns>
+        public static T GetValueByteField_Unchecked<T>(void* addr, int offset) {
+            T result = default;
+            void* _addr = Shift_Unchecked<T>(addr, offset);
+            Buffer.MemoryCopy(_addr, &result, sizeof(T), sizeof(T));
+            return result;
+        }
+
+        /// <summary>
+        /// Get the managed array from the unmanaged memory block.
+        /// </summary>
+        public static bool GetManagedArray_Unchecked<T>(void* src, ulong length, [NotNull] out T[]? array) {
+            if (length == 0) {
+                array = Array.Empty<T>();
+                return false;
+            }
+            try {
+                array = new T[length];
+                fixed (T* ptr = array) {
+                    Buffer.MemoryCopy(src, ptr, length, length);
+                }
+                return true;
+            } catch {
+                array = Array.Empty<T>();
+                return false;
+            }
+        }
+
+#pragma warning restore CS8500, CS8600, CS8603
     }
 }

@@ -1,7 +1,11 @@
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Cyh.Net.Reflection {
     public static class ObjectHelper {
+        class _struct<T> where T : struct { }
+        class _unmanaged<T> where T : unmanaged { }
         private static object? GetValue(object? instance, MemberInfo memberInfo) {
             if (memberInfo is PropertyInfo propertyInfo) {
                 return propertyInfo.GetValue(instance);
@@ -152,6 +156,53 @@ namespace Cyh.Net.Reflection {
         /// </summary>
         public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute<T>(Type type) {
             return type.GetProperties().Where(p => p.IsDefined(typeof(T)));
+        }
+
+        public static bool IsStruct(Type type) {
+            try {
+                typeof(_struct<>).MakeGenericType(type);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        public static bool IsUnmanaged(Type type) {
+            try {
+                typeof(_unmanaged<>).MakeGenericType(type);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        public static bool IsStruct<T>() => IsStruct(typeof(T));
+
+        public static bool IsUnmanaged<T>() => IsUnmanaged(typeof(T));
+
+
+        public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args) {
+            try {
+                Type[] types = new Type[args.Length];
+
+                for (int i = 0; i < args.Length; i++) {
+#pragma warning disable CS8602
+                    types[i] = args[i].GetType();
+#pragma warning restore CS8602
+                }
+
+                var constructor = typeof(T).GetConstructor(types);
+
+                output = (T?)constructor?.Invoke(args) ?? default;
+
+            } catch { output = default; }
+
+            return false;
+        }
+
+        public static T? ConstructBy<T>(params object[] args) {
+            ConstructBy(out T? result, args);
+            return result;
         }
     }
 }

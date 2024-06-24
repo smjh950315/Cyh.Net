@@ -21,7 +21,6 @@
 
         protected virtual void Dispose(bool disposing) {
             if (!this.m_disposed) {
-                if (disposing) { }
 
                 unsafe {
                     if (this.m_release_callback != null && this.m_data_address != null) {
