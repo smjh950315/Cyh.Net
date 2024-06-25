@@ -1,4 +1,4 @@
-﻿using Cyh.Net.Internal;
+﻿using Cyh.Net.Native.Internal;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Text;
