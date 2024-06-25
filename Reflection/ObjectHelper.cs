@@ -1,11 +1,9 @@
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Cyh.Net.Reflection {
     public static class ObjectHelper {
-        class _struct<T> where T : struct { }
-        class _unmanaged<T> where T : unmanaged { }
+
         private static object? GetValue(object? instance, MemberInfo memberInfo) {
             if (memberInfo is PropertyInfo propertyInfo) {
                 return propertyInfo.GetValue(instance);
@@ -158,29 +156,48 @@ namespace Cyh.Net.Reflection {
             return type.GetProperties().Where(p => p.IsDefined(typeof(T)));
         }
 
+        /// <summary>
+        /// Whether the input type is struct
+        /// </summary>
+        /// <returns>The input type is struct</returns>
         public static bool IsStruct(Type type) {
-            try {
-                typeof(_struct<>).MakeGenericType(type);
-                return true;
-            } catch {
-                return false;
-            }
+            return type.IsValueType || type.IsEnum;
         }
 
+        /// <summary>
+        /// Whether the input type is unmanaged, and excluding any managed members
+        /// </summary>
+        /// <returns>The input type is unmanaged</returns>
         public static bool IsUnmanaged(Type type) {
-            try {
-                typeof(_unmanaged<>).MakeGenericType(type);
+            if (type.IsPrimitive || type.IsPointer || type.IsEnum) {
                 return true;
-            } catch {
+            } else if (type.IsValueType) {
+                var members = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                foreach (var member in members) {
+                    if (!IsUnmanaged(member.FieldType)) return false;
+                }
+                return true;
+            } else {
                 return false;
             }
         }
 
+        /// <summary>
+        /// Whether the input type is struct
+        /// </summary>
+        /// <returns>Wheter the type <typeparamref name="T"/> is struct</returns>
         public static bool IsStruct<T>() => IsStruct(typeof(T));
 
+        /// <summary>
+        /// Whether the input type is unmanaged, and excluding any managed members
+        /// </summary>
+        /// <returns>Wheter the type <typeparamref name="T"/> is unmanaged</returns>
         public static bool IsUnmanaged<T>() => IsUnmanaged(typeof(T));
 
-
+        /// <summary>
+        /// Try construct an instance of <typeparamref name="T"/> with arguments <paramref name="args"/>
+        /// </summary>
+        /// <returns>Whether succeed</returns>
         public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args) {
             try {
                 Type[] types = new Type[args.Length];
@@ -200,6 +217,10 @@ namespace Cyh.Net.Reflection {
             return false;
         }
 
+        /// <summary>
+        /// Try construct an instance of <typeparamref name="T"/> with arguments <paramref name="args"/>
+        /// </summary>
+        /// <returns>New instance of <typeparamref name="T"/> or null if failure on constructing</returns>
         public static T? ConstructBy<T>(params object[] args) {
             ConstructBy(out T? result, args);
             return result;
