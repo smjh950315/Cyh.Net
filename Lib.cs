@@ -32,7 +32,7 @@ namespace Cyh.Net {
         /// <param name="func">The function to execute</param>
         /// <returns>Whether executed without exception</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryExecute(NoReturn func) {
+        public static bool TryExecute(Action func) {
             try {
                 func();
                 return true;
@@ -46,7 +46,7 @@ namespace Cyh.Net {
         /// <param name="val">The value to pass to the function</param>
         /// <returns>Whether executed without exception</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryExecute<T>(NoReturn<T> func, T? val) {
+        public static bool TryExecute<T>(Action<T> func, T val) {
             try {
                 func(val);
                 return true;
@@ -61,7 +61,7 @@ namespace Cyh.Net {
         /// <param name="val2">The value to pass to the function</param>
         /// <returns>Whether executed without exception</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryExecute<T, U>(NoReturn<T, U> func, T? val1, U? val2) {
+        public static bool TryExecute<T, U>(Action<T, U> func, T val1, U val2) {
             try {
                 func(val1, val2);
                 return true;
@@ -77,7 +77,7 @@ namespace Cyh.Net {
         /// <param name="val3">The value to pass to the function</param>
         /// <returns>Whether executed without exception</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryExecute<T, U, V>(NoReturn<T, U, V> func, T? val1, U? val2, V? val3) {
+        public static bool TryExecute<T, U, V>(Action<T, U, V> func, T val1, U val2, V val3) {
             try {
                 func(val1, val2, val3);
                 return true;

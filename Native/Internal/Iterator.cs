@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Cyh.Net.Internal {
+namespace Cyh.Net.Native.Internal {
     internal unsafe class Iterator<T> : IEnumerator<T> where T : unmanaged {
 
         T* m_begin;

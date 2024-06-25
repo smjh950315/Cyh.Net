@@ -24,22 +24,43 @@ namespace Cyh.Net {
             return values.Contains(value);
         }
 
+        /// <summary>
+        /// Encode the string into bytes in utf-8 encoding
+        /// </summary>
+        /// <returns>Bytes result of string in Utf-8 encoding</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte[]? GetBytesUtf8(this string? str) => !str.IsNullOrEmpty() ? Encoding.UTF8.GetBytes(str) : null;
+        public static byte[] GetBytesUtf8(this string? str) => !str.IsNullOrEmpty() ? Encoding.UTF8.GetBytes(str) : Array.Empty<byte>();
 
+        /// <summary>
+        /// Decode byte data to string in Utf-8 encoding
+        /// </summary>
+        /// <returns>String result decoded from bytes in Utf-8 encoding</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string? GetStringAsUtf8(this byte[]? bytes) => !bytes.IsNullOrEmpty() ? Encoding.UTF8.GetString(bytes) : null;
+        public static string GetStringAsUtf8(this byte[]? bytes) => !bytes.IsNullOrEmpty() ? Encoding.UTF8.GetString(bytes) : String.Empty;
 
+        /// <summary>
+        /// Serialize object model into json string
+        /// </summary>
+        /// <returns>Json string from serialized object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string? Serialize<T>(this T? value, JsonSerializerOptions? options = null)
             => value != null ? JsonSerializer.Serialize(value, options) : null;
 
+        /// <summary>
+        /// Deserialize the string into object model
+        /// </summary>
+        /// <returns>Object model from deserialized string</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? Deserialize<T>(this string? str, JsonSerializerOptions? options = null)
             => !str.IsNullOrEmpty() ? JsonSerializer.Deserialize<T>(str, options) : default;
 
+        /// <summary>
+        /// Serialize object model into json string
+        /// </summary>
+        /// <param name="output">Json string from serialized object if completed without error, otherwise null</param>
+        /// <returns>Whether serialized without error</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TrySerialize<T>(this T? value, out string? output, JsonSerializerOptions? options = null) {
+        public static bool TrySerialize<T>(this T? value, [NotNullWhen(true)] out string? output, JsonSerializerOptions? options = null) {
             try {
                 output = value.Serialize(options);
                 return !output.IsNullOrEmpty();
@@ -49,8 +70,13 @@ namespace Cyh.Net {
             }
         }
 
+        /// <summary>
+        /// Deserialize the string into object model
+        /// </summary>
+        /// <param name="output">Object model from deserialized string if completed without error, otherwise null</param>
+        /// <returns>Whether deserialized without error</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryDeserialize<T>(this string? str, out T? output, JsonSerializerOptions? options = null) {
+        public static bool TryDeserialize<T>(this string? str, [NotNullWhen(true)] out T? output, JsonSerializerOptions? options = null) {
             try {
                 output = str.Deserialize<T>(options);
                 return output != null;
@@ -60,14 +86,26 @@ namespace Cyh.Net {
             }
         }
 
+        /// <summary>
+        /// Serialize object model into utf-8 json string
+        /// </summary>
+        /// <returns>Utf-8 son string from serialized object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte[]? SerializeAsUtf8<T>(this T? value, JsonSerializerOptions? options = null)
             => value.Serialize(options).GetBytesUtf8();
 
+        /// <summary>
+        /// Deserialize the utf-8 json string into object model
+        /// </summary>
+        /// <returns>Object model from deserialized utf-8 json string</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? DeserializeAsUtf8<T>(this byte[]? bytes, JsonSerializerOptions? options = null)
             => bytes.GetStringAsUtf8().Deserialize<T>(options);
 
+        /// <summary>
+        /// Compare a collection to another
+        /// </summary>
+        /// <returns>True if element is equal in both collection</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsEqualTo<T>(this IEnumerable<T>? values, IEnumerable<T>? others) where T : IEquatable<T> {
             if (values.IsNullOrEmpty() || others.IsNullOrEmpty()) { return false; }

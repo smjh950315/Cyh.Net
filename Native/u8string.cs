@@ -60,7 +60,7 @@ namespace Cyh.Net.Native {
             if (!bytes.IsNullOrEmpty()) {
                 unsafe {
                     fixed (byte* ptr = bytes) {
-                        this.m_data = unchecked((nuint)Marshal.AllocHGlobal(bytes.Length));
+                        this.m_data = unchecked((nuint)Native.Utilities.Allocate((nuint)bytes.Length));
                         this.m_length = (nuint)bytes.Length;
                         Buffer.MemoryCopy(ptr, (void*)this.m_data, bytes.Length, bytes.Length);
                     }
