@@ -22,8 +22,10 @@ namespace Cyh.Net.Native {
             return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (int)size);
         }
         static void __free(void* ptr) {
+            if (ptr == null) { return; }
             if (m_customFreeCallback != null) {
                 m_customFreeCallback(ptr);
+                return;
             }
             Marshal.FreeHGlobal((IntPtr)ptr);
         }
