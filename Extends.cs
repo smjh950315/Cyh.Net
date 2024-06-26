@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -116,6 +117,57 @@ namespace Cyh.Net {
                 if (!itSelf.Current.Equals(itOther.Current)) { return false; }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Whether the input type is number
+        /// </summary>
+        /// <returns>True if the input type is number, otherwise false</returns>
+        public static bool IsNumeric(this Type type) {
+            if (type == null) { return false; }
+            return type.IsAnyOf(Typedef.Numeric);
+        }
+
+        /// <summary>
+        /// Whether the input type is struct
+        /// </summary>
+        /// <returns>True if the input type is struct, otherwise false</returns>
+        public static bool IsStruct(this Type type) {
+            return type.IsValueType || type.IsEnum;
+        }
+
+        /// <summary>
+        /// Whether the input type is unmanaged, and excluding any managed members
+        /// </summary>
+        /// <returns>True if the input type is unmanaged, otherwise false</returns>
+        public static bool IsUnmanaged(this Type type) {
+            if (type.IsPrimitive || type.IsPointer || type.IsEnum) {
+                return true;
+            } else if (type.IsValueType) {
+                var members = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                foreach (var member in members) {
+                    if (!IsUnmanaged(member.FieldType)) return false;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Whether the input type contain the StructureLayout attribute
+        /// </summary>
+        /// <returns>True if the type input contain the StructureLayout attribute, otherwise false</returns>
+        public static bool HasStructureLayout(this Type type) {
+            try {
+                if (!IsStruct(type)) {
+                    return false;
+                } else {
+                    return type.StructLayoutAttribute != null;
+                }
+            } catch {
+                return false;
+            }
         }
     }
 }

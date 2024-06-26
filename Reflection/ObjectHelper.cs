@@ -159,45 +159,25 @@ namespace Cyh.Net.Reflection {
         /// <summary>
         /// Whether the input type is struct
         /// </summary>
-        /// <returns>The input type is struct</returns>
-        public static bool IsStruct(Type type) {
-            return type.IsValueType || type.IsEnum;
-        }
+        /// <returns>True if the type <typeparamref name="T"/> is struct, otherwise false</returns>
+        public static bool IsStruct<T>() => typeof(T).IsStruct();
 
         /// <summary>
         /// Whether the input type is unmanaged, and excluding any managed members
         /// </summary>
-        /// <returns>The input type is unmanaged</returns>
-        public static bool IsUnmanaged(Type type) {
-            if (type.IsPrimitive || type.IsPointer || type.IsEnum) {
-                return true;
-            } else if (type.IsValueType) {
-                var members = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var member in members) {
-                    if (!IsUnmanaged(member.FieldType)) return false;
-                }
-                return true;
-            } else {
-                return false;
-            }
-        }
+        /// <returns>True if the type <typeparamref name="T"/> is unmanaged, otherwise false</returns>
+        public static bool IsUnmanaged<T>() => typeof(T).IsUnmanaged();
 
         /// <summary>
-        /// Whether the input type is struct
+        /// Whether the input type contain the StructureLayout attribute
         /// </summary>
-        /// <returns>Wheter the type <typeparamref name="T"/> is struct</returns>
-        public static bool IsStruct<T>() => IsStruct(typeof(T));
-
-        /// <summary>
-        /// Whether the input type is unmanaged, and excluding any managed members
-        /// </summary>
-        /// <returns>Wheter the type <typeparamref name="T"/> is unmanaged</returns>
-        public static bool IsUnmanaged<T>() => IsUnmanaged(typeof(T));
+        /// <returns>True if the type <typeparamref name="T"/> contain the StructureLayout attribute, otherwise false</returns>
+        public static bool HasStructureLayout<T>() => typeof(T).HasStructureLayout();
 
         /// <summary>
         /// Try construct an instance of <typeparamref name="T"/> with arguments <paramref name="args"/>
         /// </summary>
-        /// <returns>Whether succeed</returns>
+        /// <returns>True if succeed, otherwise false</returns>
         public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args) {
             try {
                 Type[] types = new Type[args.Length];
