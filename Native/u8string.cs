@@ -12,8 +12,8 @@ namespace Cyh.Net.Native {
         , IEquatable<string>
         , IDisposable {
 
-        nuint m_length;
         nuint m_data;
+        nuint m_length;
 
         public int Length => (int)this.m_length;
 
