@@ -5,6 +5,6 @@
     }
 
     public interface IReadOnlyDataSource<T> : IReadOnlyDataSource {
-        IQueryable<T>? ReadOnlyAccesser { get; set; }
+        IQueryable<T>? ReadOnlyAccesser { get; }
     }
 }

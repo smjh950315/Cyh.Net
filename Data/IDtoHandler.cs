@@ -2,8 +2,8 @@
 
 namespace Cyh.Net.Data {
     public interface IDtoHandler<T, Dto> {
-        Expression<Func<T, Dto>> ExprToDTO { get; set; }
-        Expression<Func<Dto, T>> ExprFromDTO { get; set; }
+        Expression<Func<T, Dto>> ExprToDTO { get; }
+        Expression<Func<Dto, T>> ExprFromDTO { get; }
         IDataTransResult ReadException(Exception? exception);
     }
 }

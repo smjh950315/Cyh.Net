@@ -2,8 +2,6 @@
 using System.Linq.Expressions;
 
 namespace Cyh.Net.Data {
-    public interface IDataSource<T> : IReadOnlyDataSource<T>, IWritableDataSource<T> { }
-
     public class DataRepository {
         public static IDataRepository<Dto> GetDataRepository<T, Dto>(IDataSource<T> dataSource, IDtoHandler<T, Dto> dtoHandler) {
             return new DataRepositoryImpl<T, Dto>(dataSource, dtoHandler);
@@ -45,7 +43,7 @@ namespace Cyh.Net.Data {
                 }
             }
             if (!save_immediately) { return; }
-            if (!fnDoSave(destination, out Exception ? internalException)) {
+            if (!fnDoSave(destination, out Exception? internalException)) {
                 result.TrySetResCode(ResultEnum.InternalError, internalException?.Message);
             }
         }
