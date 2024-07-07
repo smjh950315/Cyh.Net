@@ -19,7 +19,7 @@ namespace Cyh.Net.Native {
 
         public void Dispose() {
             unsafe {
-                Native.Utilities.Free((void*)this.m_data);
+                Native.UnmanagedHelper.Free((void*)this.m_data);
                 this.m_data = 0;
                 this.m_length = 0;
             }
@@ -29,7 +29,7 @@ namespace Cyh.Net.Native {
             if (this.Length == other.Length) {
                 if (this.Length != 0) {
                     unsafe {
-                        return Native.Utilities.IsBytesEqual((void*)this.m_data, (void*)other.m_data, this.Length);
+                        return Native.UnmanagedHelper.IsBytesEqual((void*)this.m_data, (void*)other.m_data, this.Length);
                     }
                 }
                 return true;
@@ -60,7 +60,7 @@ namespace Cyh.Net.Native {
             if (!bytes.IsNullOrEmpty()) {
                 unsafe {
                     fixed (byte* ptr = bytes) {
-                        this.m_data = unchecked((nuint)Native.Utilities.Allocate((nuint)bytes.Length));
+                        this.m_data = unchecked((nuint)Native.UnmanagedHelper.Allocate((nuint)bytes.Length));
                         this.m_length = (nuint)bytes.Length;
                         Buffer.MemoryCopy(ptr, (void*)this.m_data, bytes.Length, bytes.Length);
                     }
@@ -80,6 +80,6 @@ namespace Cyh.Net.Native {
 
         public static implicit operator string(u8string str) => str.ToString();
 
-        public static implicit operator byte[](u8string str) { return str.ToArray(); }
+        public static implicit operator byte[](u8string str) { return [.. str]; }
     }
 }

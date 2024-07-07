@@ -5,7 +5,7 @@ namespace Cyh.Net.Native {
     /// <summary>
     /// The method collection to handle unmanaged resources
     /// </summary>
-    public unsafe static class Utilities {
+    public unsafe static class UnmanagedHelper {
         static delegate*<nuint, void*> m_customAllocCallback = null;
         static delegate*<void*, nuint, void*> m_customReallocCallback = null;
         static delegate*<void*, void> m_customFreeCallback = null;
