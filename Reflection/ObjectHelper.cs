@@ -145,15 +145,15 @@ namespace Cyh.Net.Reflection {
         /// <summary>
         /// Get the member informations with custom attribute of <paramref name="attrType"/>
         /// </summary>
-        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute(Type type, Type attrType) {
+        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute(this Type type, Type attrType) {
             return type.GetProperties().Where(p => p.IsDefined(attrType));
         }
 
         /// <summary>
         /// Get the member informations with custom attribute of <typeparamref name="T"/>
         /// </summary>
-        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute<T>(Type type) {
-            return type.GetProperties().Where(p => p.IsDefined(typeof(T)));
+        public static IEnumerable<PropertyInfo> GetPropertiesWithCustomAttribute<T>(this Type type) {
+            return type.GetPropertiesWithCustomAttribute(typeof(T));
         }
 
         /// <summary>
@@ -192,6 +192,8 @@ namespace Cyh.Net.Reflection {
 
                 output = (T?)constructor?.Invoke(args) ?? default;
 
+                return output != null;
+
             } catch { output = default; }
 
             return false;
@@ -204,6 +206,76 @@ namespace Cyh.Net.Reflection {
         public static T? ConstructBy<T>(params object[] args) {
             ConstructBy(out T? result, args);
             return result;
+        }
+
+        /// <summary>
+        /// Get the dictionary with Key as Membername and Value as PropertyInfo
+        /// </summary>
+        /// <returns>A dictionary with Key as Membername and Value as PropertyInfo of current type</returns>
+        public static IDictionary<string, PropertyInfo> GetNamePropertyDictionary(this Type type, Func<string, string>? callbackConvertStr = null) {
+            PropertyInfo[] propertyInfos = type.GetProperties();
+            Dictionary<string, PropertyInfo> dict = new Dictionary<string, PropertyInfo>();
+            foreach (PropertyInfo propertyInfo in propertyInfos) {
+                if (callbackConvertStr != null) {
+                    dict[callbackConvertStr(propertyInfo.Name)] = propertyInfo;
+                } else {
+                    dict[propertyInfo.Name] = propertyInfo;
+                }
+            }
+            return dict;
+        }
+
+        /// <summary>
+        /// Get the dictionary with Key as Membername and Value as PropertyInfo
+        /// </summary>
+        /// <returns>A dictionary with Key as Membername and Value as PropertyInfo <typeparamref name="T"/> </returns>
+        public static IDictionary<string, PropertyInfo> GetNamePropertyDictionary<T>(Func<string, string>? callbackConvertStr = null) {
+            return typeof(T).GetNamePropertyDictionary(callbackConvertStr);
+        }
+
+        /// <summary>
+        /// Get the dictionary with Key come form custom generator and Value as PropertyInfo
+        /// </summary>
+        /// <typeparam name="T">Type to get the dictionary</typeparam>
+        /// <typeparam name="TKey">Type to be the key</typeparam>
+        /// <param name="callbackGetKey">The method to get the custom key from attribute <typeparamref name="T"/></param>
+        /// <returns>A dictionary with Key as value get form Attribute and Value as PropertyInfo</returns>
+        public static IDictionary<TKey, PropertyInfo> GetPropertiesWithCustomAttribute<T, TKey>(this Type type, Func<T, TKey> callbackGetKey) where T : Attribute where TKey : notnull {
+            PropertyInfo[] propertyInfos = type.GetProperties();
+            Dictionary<TKey, PropertyInfo> dict = new Dictionary<TKey, PropertyInfo>();
+            foreach (PropertyInfo propertyInfo in propertyInfos) {
+                T? attr = propertyInfo.GetCustomAttribute<T>();
+                if (attr != null) {
+                    dict[callbackGetKey(attr)] = propertyInfo;
+                }
+            }
+            return dict;
+        }
+
+        /// <summary>
+        /// Try convert current object to <paramref name="targetType"/>
+        /// </summary>
+        /// <param name="targetType">Target to convert to</param>
+        /// <returns>Object of target type if <paramref name="targetType"/> is not null and converted without error, otherwise null</returns>
+        public static object? TryConvertTo(this object? obj, Type? targetType = null) {
+            if (obj == null) { return null; }
+            if (targetType == null) { return obj; }
+            if(targetType.IsAssignableFrom(obj.GetType())) { return obj; }
+            try {
+                return Convert.ChangeType(obj, targetType.GetNotNullType());
+            } catch (Exception ex) {
+                ex.Print();
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Try convert current object to <typeparamref name="T"/>
+        /// </summary>
+        /// <typeparam name="T">Type to convert to</typeparam>
+        /// <returns>Object of target type if converted without error, otherwise null</returns>
+        public static object? TryConvertTo<T>(this object? obj) {
+            return obj.TryConvertTo(typeof(T));
         }
     }
 }

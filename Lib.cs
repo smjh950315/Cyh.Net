@@ -1,9 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Cyh.Net.DependencyInjection;
 
 namespace Cyh.Net {
     public static class Lib {
-
+        internal static Action<string?>? gs_globalMessageHandler;
         public delegate void NoReturn();
         public delegate void NoReturn<T>(T? val);
         public delegate void NoReturn<T, U>(T? val1, U? val2);
@@ -194,6 +195,31 @@ namespace Cyh.Net {
         public static void ThrowNull<T, U, V, W>([NotNull] T? value1, [NotNull] U? value2, [NotNull] V? value3, [NotNull] W? value4) {
             ThrowNull(value1, value2, value3);
             ThrowNull(value4);
+        }
+
+        /// <summary>
+        /// Set global default message holder
+        /// </summary>
+        /// <param name="messageHolder">Function to handle string</param>
+        public static void SetGlobalMessageHolder(Action<string?>? messageHolder) {
+            gs_globalMessageHandler = messageHolder;
+        }
+
+        /// <summary>
+        /// Create service factory implement
+        /// </summary>
+        /// <typeparam name="T">The service type to create</typeparam>
+        /// <param name="factoryMethod">The delegate to create service</param>
+        /// <returns>The implement of service factory</returns>
+        /// <exception cref="InvalidOperationException">Instance of service <typeparamref name="T"/> cannot be created</exception>
+        public static Func<IServiceProvider, object> MakeServiceFactory<T>(Func<T?> factoryMethod) {
+            return (sp) => {
+                T? instance = factoryMethod();
+                if (instance == null) {
+                    throw new InvalidOperationException($"無法建立注入物件 {typeof(T).Name} 的實體");
+                }
+                return instance;
+            };
         }
     }
 }

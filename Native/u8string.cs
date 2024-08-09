@@ -1,7 +1,7 @@
-﻿using Cyh.Net.Native.Internal;
-using System.Collections;
+﻿using System.Collections;
 using System.Runtime.InteropServices;
 using System.Text;
+using Cyh.Net.Native.Internal;
 
 namespace Cyh.Net.Native {
 
@@ -12,8 +12,8 @@ namespace Cyh.Net.Native {
         , IEquatable<string>
         , IDisposable {
 
-        nuint m_data;
-        nuint m_length;
+        nuint m_data = 0;
+        nuint m_length = 0;
 
         public int Length => (int)this.m_length;
 
@@ -68,18 +68,14 @@ namespace Cyh.Net.Native {
             }
         }
 
-        public u8string(string str) : this(str.GetBytesUtf8() ?? []) { }
+        public u8string(string str) : this(str.GetBytesUtf8()) { }
 
-        public static implicit operator u8string(byte[] bytes) {
-            return new u8string(bytes);
-        }
+        public static implicit operator u8string(byte[] bytes) => new u8string(bytes);
 
-        public static implicit operator u8string(string str) {
-            return new u8string(str);
-        }
+        public static implicit operator u8string(string str) => new u8string(str);
 
         public static implicit operator string(u8string str) => str.ToString();
 
-        public static implicit operator byte[](u8string str) { return [.. str]; }
+        public static implicit operator byte[](u8string str) => str.ToArray();
     }
 }

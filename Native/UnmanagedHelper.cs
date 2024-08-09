@@ -19,7 +19,11 @@ namespace Cyh.Net.Native {
             if (m_customReallocCallback != null) {
                 return m_customReallocCallback(old, size);
             }
-            return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (int)size);
+#if NET7_0_OR_GREATER 
+            return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (nint)size);
+#else                  
+            return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (IntPtr)(long)size);
+#endif
         }
         static void __free(void* ptr) {
             if (ptr == null) { return; }

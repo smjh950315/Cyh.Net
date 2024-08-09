@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Cyh.Net.DependencyInjection;
 
 namespace Cyh.Net {
     public static class Extends {
@@ -168,6 +169,189 @@ namespace Cyh.Net {
             } catch {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Indicate whether the type is Nullable`T`
+        /// </summary>
+        /// <returns>True if the type is Nullable`T`, otherwise false</returns>
+        public static bool IsNullableWrapped(this Type type) {
+            return type.Name.StartsWith("Nullable");
+        }
+
+        /// <summary>
+        /// Get type if not null
+        /// </summary>
+        /// <returns>Type of Nullable`T`.Value or current type if not Nullable`T`</returns>
+        public static Type GetNotNullType(this Type type) {
+            if (type.IsNullableWrapped()) {
+#pragma warning disable CS8602
+                return type.GetProperty("Value").PropertyType;
+#pragma warning restore CS8602
+            } else {
+                return type;
+            }
+        }
+
+        /// <summary>
+        /// Print StackTrace with title if current exception is not null, otherwise do nothing
+        /// </summary>
+        public static void PrintStack(this Exception? exception, Action<string?>? messageHolder = null) {
+            if (exception == null) { return; }
+            Action<string?> _messageHolder;
+            if (messageHolder != null) {
+                _messageHolder = messageHolder;
+            } else if (Lib.gs_globalMessageHandler != null) {
+                _messageHolder = Lib.gs_globalMessageHandler;
+            } else {
+                _messageHolder = Console.WriteLine;
+            }
+            _messageHolder("===============StackTrace===============");
+            _messageHolder(exception.StackTrace);
+        }
+
+        /// <summary>
+        /// Print Message with title if current exception is not null, otherwise do nothing
+        /// </summary>
+        public static void PrintMessage(this Exception? exception, Action<string?>? messageHolder = null) {
+            if (exception == null) { return; }
+            Action<string?> _messageHolder;
+            if (messageHolder != null) {
+                _messageHolder = messageHolder;
+            } else if (Lib.gs_globalMessageHandler != null) {
+                _messageHolder = Lib.gs_globalMessageHandler;
+            } else {
+                _messageHolder = Console.WriteLine;
+            }
+            _messageHolder("===============Message===============");
+            _messageHolder(exception.Message);
+        }
+
+        /// <summary>
+        /// Print Source with title if current exception is not null, otherwise do nothing
+        /// </summary>
+        public static void PrintSource(this Exception? exception, Action<string?>? messageHolder = null) {
+            if (exception == null) { return; }
+            Action<string?> _messageHolder;
+            if (messageHolder != null) {
+                _messageHolder = messageHolder;
+            } else if (Lib.gs_globalMessageHandler != null) {
+                _messageHolder = Lib.gs_globalMessageHandler;
+            } else {
+                _messageHolder = Console.WriteLine;
+            }
+            _messageHolder("===============Source===============");
+            _messageHolder(exception.Source);
+        }
+
+        /// <summary>
+        /// Print all human readable message of an exception if not null
+        /// </summary>
+        /// <param name="exception"></param>
+        public static void Print(this Exception? exception, Action<string?>? messageHolder = null) {
+            if (exception == null) { return; }
+            exception.PrintSource(messageHolder);
+            exception.PrintMessage(messageHolder);
+            exception.PrintStack(messageHolder);
+        }
+
+        /// <summary>
+        /// Indicate whether current type is dereived from <paramref name="parent"/>
+        /// </summary>
+        /// <param name="parent">Type of parent object</param>
+        /// <returns>True if current type is child of <paramref name="parent"/>, otherwise false</returns>
+        public static bool IsChildOf(this Type type, Type parent) {
+            return type.IsSubclassOf(parent);
+        }
+
+        /// <summary>
+        /// Indicate whether current type is dereived from <typeparamref name="T"/>
+        /// </summary>
+        /// <returns>True if current type is child of <typeparamref name="T"/>, otherwise false</returns>
+        public static bool IsChildOf<T>(this Type type) {
+            return type.IsChildOf(typeof(T));
+        }
+
+        /// <summary>
+        /// Indicate whether <paramref name="parent"/> is dereived from current type
+        /// </summary>
+        /// <param name="parent">Type of parent object</param>
+        /// <returns>True if current type is child of <paramref name="parent"/>, otherwise false</returns>
+        public static bool IsParentOf(this Type type, Type child) {
+            return child.IsSubclassOf(type);
+        }
+
+        /// <summary>
+        /// Indicate whether current type dereived from <typeparamref name="T"/>
+        /// </summary>
+        /// <returns>True if current type is child of <typeparamref name="T"/>, otherwise false</returns>
+        public static bool IsParentOf<T>(this Type type) {
+            return type.IsParentOf(typeof(T));
+        }
+
+        /// <summary>
+        /// Make instance of <paramref name="type"/> by <paramref name="constructArgs"/> as constructor parameters
+        /// </summary>
+        /// <param name="type">Dest type</param>
+        /// <param name="constructArgs">constructor parameters</param>
+        /// <returns>Instance of <paramref name="type"/> or null if failure or no matched constructor</returns>
+        public static object? Construct(this Type type, params object[] constructArgs) {
+            try {
+                Type[] constructorTypes = new Type[constructArgs.Length];
+                for (int i = 0; i < constructorTypes.Length; i++) {
+                    constructorTypes[i] = constructArgs[i].GetType();
+                }
+                var constructor = type.GetConstructor(constructorTypes);
+                if (constructor == null) { return null; }
+                return constructor.Invoke(constructArgs);
+            } catch (Exception e) {
+                e.Print();
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Make instance of <paramref name="type"/> by <paramref name="constructArgs"/> as constructor parameters
+        /// </summary>
+        /// <param name="type">Dest type</param>
+        /// <param name="constructArgs">constructor parameters</param>
+        /// <returns>Instance of <paramref name="type"/> or null if failure or no matched constructor</returns>
+        public static bool Construct(this Type type, [NotNullWhen(true)] out object? instance, params object[] constructArgs) {
+            instance = type.Construct(constructArgs);
+            return instance != null;
+        }
+
+        /// <summary>
+        /// Get registered service <typeparamref name="T"/> from service provider
+        /// </summary>
+        /// <typeparam name="T">Type of service to get</typeparam>
+        /// <param name="serviceInstance">The instance of service</param>
+        /// <returns>True if service if found, otherwise false</returns>
+        public static bool GetInjectedService<T>(this IServiceProvider serviceProvider, [NotNullWhen(true)] out T? serviceInstance) where T : class {
+            serviceInstance = serviceProvider.GetService(typeof(T)) as T;
+            return serviceInstance != null;
+        }
+
+        /// <summary>
+        /// Inject the service <typeparamref name="T"/> if <typeparamref name="T"/> is not found in service provider
+        /// </summary>
+        /// <typeparam name="T">Service type</typeparam>
+        /// <param name="implFactory">The implement of service factory</param>
+        public static void InjectScopedIfNotExisting<T>(this IDependencyInjectionData diData, Func<IServiceProvider, T> implFactory) where T : class {
+            object? service = diData.GetService(typeof(T));
+            if (service == null) {
+                diData.AddScoped(typeof(T), implFactory);
+            }
+        }
+
+        /// <summary>
+        /// Inject the service <typeparamref name="T"/> if <typeparamref name="T"/> is not found in service provider
+        /// </summary>
+        /// <typeparam name="T">Service type</typeparam>
+        /// <param name="factoryMethod">The implement of service factory</param>
+        public static void InjectScopedIfNotExisting<T>(this IDependencyInjectionData diService, Func<T?> factoryMethod) where T : class {
+            var implFactory = Lib.MakeServiceFactory(factoryMethod);
+            InjectScopedIfNotExisting(diService, implFactory);
         }
     }
 }
