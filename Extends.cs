@@ -449,9 +449,23 @@ namespace Cyh.Net
             return Expression.Lambda<Func<T, bool>>(binExp, originalExpression.Parameters);
         }
 
-        public static T[] GetEnumArray<T>(this int[]? ints) where T : Enum
+        public static T[] GetEnumArray<T>(this int[]? ints, bool all_if_null = false) where T : Enum
         {
-            if (ints.IsNullOrEmpty()) return Array.Empty<T>();
+            if (ints == null)
+            {
+                if (all_if_null)
+                {
+                    return (T[])Enum.GetValues(typeof(T));
+                }
+                else
+                {
+                    return Array.Empty<T>();
+                }
+            }
+            if (ints.Length == 0)
+            {
+                return Array.Empty<T>();
+            }
             T[] results = new T[ints.Length];
             for (int i = 0; i < ints.Length; i++)
             {
