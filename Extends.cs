@@ -434,6 +434,7 @@ namespace Cyh.Net
             var visitor = new ParameterUpdateVisitor(originalExpression.Parameters.First(), additionalExpression.Parameters.First());
             // replace the parameter in the original expression
             originalExpression = visitor.Visit(originalExpression) as Expression<Func<T, bool>>;
+#pragma warning disable CS8602
             // now you can and together the two expressions
             BinaryExpression? binExp;
             if (_and)
@@ -444,6 +445,7 @@ namespace Cyh.Net
             {
                 binExp = Expression.Or(additionalExpression.Body, originalExpression.Body);
             }
+#pragma warning restore CS8602
             // and return a new lambda, that will do what you want.
             // NOTE that the binExp has reference only to te newExp.Parameters[0] (there is only 1) parameter, and no other
             return Expression.Lambda<Func<T, bool>>(binExp, originalExpression.Parameters);
