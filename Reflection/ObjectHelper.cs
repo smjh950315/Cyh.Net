@@ -262,7 +262,7 @@ namespace Cyh.Net.Reflection {
             if (targetType == null) { return obj; }
             if(targetType.IsAssignableFrom(obj.GetType())) { return obj; }
             try {
-                return Convert.ChangeType(obj, targetType.GetNotNullType());
+                return Convert.ChangeType(obj, targetType.RemoveNullable());
             } catch (Exception ex) {
                 ex.Print();
                 return null;

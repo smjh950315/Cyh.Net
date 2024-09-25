@@ -209,19 +209,24 @@ namespace Cyh.Net
         /// <returns>True if the type is Nullable`T`, otherwise false</returns>
         public static bool IsNullableWrapped(this Type type)
         {
-            return type.Name.StartsWith("Nullable");
+            if (type == null) { return false; }
+            if (type.IsGenericType)
+            {
+                return type.GetGenericTypeDefinition() == typeof(Nullable<>);
+            }
+            return false;
         }
 
         /// <summary>
-        /// Get type if not null
+        /// Get not null type
         /// </summary>
         /// <returns>Type of Nullable`T`.Value or current type if not Nullable`T`</returns>
-        public static Type GetNotNullType(this Type type)
+        public static Type RemoveNullable(this Type type)
         {
             if (type.IsNullableWrapped())
             {
 #pragma warning disable CS8602
-                return type.GetProperty("Value").PropertyType;
+                return type.GetGenericArguments().First();
 #pragma warning restore CS8602
             }
             else
