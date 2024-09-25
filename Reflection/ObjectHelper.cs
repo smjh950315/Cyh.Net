@@ -277,5 +277,41 @@ namespace Cyh.Net.Reflection {
         public static object? TryConvertTo<T>(this object? obj) {
             return obj.TryConvertTo(typeof(T));
         }
+
+        public static object? CallMethod(this object obj, string methodName, params object[]? parameters)
+        {
+            try
+            {
+                Type[] types = parameters?.Select(p => p.GetType()).ToArray() ?? Array.Empty<Type>();
+                var method = obj.GetType().GetMethod(methodName, types);
+                if (method != null)
+                {
+                    return method.Invoke(obj, parameters);
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static object? CallStaticMethod<T>(string  methodName, params object[]? parameters)
+        {
+            try
+            {
+                Type[] types = parameters?.Select(p => p.GetType()).ToArray() ?? Array.Empty<Type>();
+                var method = typeof(T).GetMethod(methodName, types);
+                if (method != null)
+                {
+                    return method.Invoke(null, parameters);
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }
