@@ -175,28 +175,49 @@ namespace Cyh.Net.Reflection {
         public static bool HasStructureLayout<T>() => typeof(T).HasStructureLayout();
 
         /// <summary>
-        /// Try construct an instance of <typeparamref name="T"/> with arguments <paramref name="args"/>
+        /// Try construct an instance of <paramref name="type"/> with arguments <paramref name="args"/>
         /// </summary>
         /// <returns>True if succeed, otherwise false</returns>
-        public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args) {
-            try {
+        public static bool ConstructBy(Type type, [NotNullWhen(true)] out object? output, params object[] args)
+        {
+            try
+            {
                 Type[] types = new Type[args.Length];
 
-                for (int i = 0; i < args.Length; i++) {
+                for (int i = 0; i < args.Length; i++)
+                {
 #pragma warning disable CS8602
                     types[i] = args[i].GetType();
 #pragma warning restore CS8602
                 }
 
-                var constructor = typeof(T).GetConstructor(types);
+                var constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic, types);
 
-                output = (T?)constructor?.Invoke(args) ?? default;
+                output = constructor?.Invoke(args) ?? default;
 
                 return output != null;
 
-            } catch { output = default; }
+            }
+            catch { output = default; }
 
             return false;
+        }
+
+        /// <summary>
+        /// Try construct an instance of <typeparamref name="T"/> with arguments <paramref name="args"/>
+        /// </summary>
+        /// <returns>True if succeed, otherwise false</returns>
+        public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args) {
+            if(ConstructBy(typeof(T), out var meta, args))
+            {
+                output = (T)meta;
+                return true;
+            }
+            else
+            {
+                output = default;
+                return false;
+            }
         }
 
         /// <summary>
