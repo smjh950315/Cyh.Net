@@ -201,7 +201,7 @@ namespace Cyh.Net.Reflection
             Expression<Action<object?, object?>> expr = Expression.Lambda<Action<object?, object?>>(Expression.Call(cast, setValueMethod, castValue), p, v);
             return expr.Compile();
         }
-        static MappingDelegate CreateMappingDelegates(Type sourceType, Type targetType)
+        static MappingDelegate CreateMappingDelegates(Type sourceType, Type targetType, string mark)
         {
             Type retValType = typeof(MappingDelegate<,>).MakeGenericType(sourceType, targetType);
             ConstructBy(retValType, out object? retVal);
@@ -216,8 +216,37 @@ namespace Cyh.Net.Reflection
             {
                 PropertyInfo targetProperty = targetProps[i];
                 MapFromAttribute? mapFromAttribute = targetProperty.GetCustomAttributes<MapFromAttribute>(true).FirstOrDefault(x => x.SourceType == sourceType);
-                if (mapFromAttribute != null)
+
+                bool bypass;
                 {
+                    if (mapFromAttribute == null)
+                    {
+                        bypass = true;
+                    }
+                    else
+                    {
+                        bypass = false;
+                        IEnumerable<string> marks;
+                        {
+                            if (mapFromAttribute.Mark.IsNullOrEmpty())
+                            {
+                                marks = [];
+                            }
+                            else
+                            {
+                                marks = mapFromAttribute.Mark.Split(',').Select(x => x.Trim());
+                            }
+                        }
+                        if (marks.Any() && !marks.Contains(mark))
+                        {
+                            bypass = true;
+                        }
+                    }
+                }
+
+                if (!bypass)
+                {
+                    Debug.Assert(mapFromAttribute != null);
                     PropertyInfo? sourceProperty = sourceProps.FirstOrDefault(x => x.Name == mapFromAttribute.SourcePropertyName);
                     if (sourceProperty == null) continue;
                     unusedSourceProperties.Remove(sourceProperty);
@@ -327,8 +356,8 @@ namespace Cyh.Net.Reflection
 
             Debug.Assert(selectBackward != null);
             Debug.Assert(getBackward != null);
-            Debug.Assert(setBackward != null);   
-            
+            Debug.Assert(setBackward != null);
+
             Debug.Assert(TrySetMember(retVal, nameof(MappingDelegate<int, int>.SelectForwardImpl), selectForward));
             Debug.Assert(TrySetMember(retVal, nameof(MappingDelegate<int, int>.GetForwardImpl), getForward));
             Debug.Assert(TrySetMember(retVal, nameof(MappingDelegate<int, int>.SetForwardImpl), setForward));
@@ -365,19 +394,29 @@ namespace Cyh.Net.Reflection
             return func;
         }
 
-        static MappingDelegate GetMappingDelegates(Type sourceType, Type targetType)
+        static MappingDelegate GetMappingDelegates(Type sourceType, Type targetType, string mark)
         {
-            string hash = GetTypeHash(sourceType, targetType);
+            string hash;
+            {
+                if (mark.IsNullOrEmpty())
+                {
+                    hash = GetTypeHash(sourceType, targetType);
+                }
+                else
+                {
+                    hash = $"{GetTypeHash(sourceType, targetType)}__{mark}";
+                }
+            }
             if (!MappingDelegates.TryGetValue(hash, out MappingDelegate? mappingDelegate))
             {
-                mappingDelegate = CreateMappingDelegates(sourceType, targetType);
+                mappingDelegate = CreateMappingDelegates(sourceType, targetType, mark);
                 MappingDelegates[hash] = mappingDelegate;
             }
             return mappingDelegate;
         }
-        static MappingDelegate<TSource, TResult> GetMappingDelegates<TSource, TResult>()
+        static MappingDelegate<TSource, TResult> GetMappingDelegates<TSource, TResult>(string mark)
         {
-            return (MappingDelegate<TSource, TResult>)GetMappingDelegates(typeof(TSource), typeof(TResult));
+            return (MappingDelegate<TSource, TResult>)GetMappingDelegates(typeof(TSource), typeof(TResult), mark);
         }
 
         private static object? GetValue(object? instance, MemberInfo memberInfo)
@@ -759,6 +798,13 @@ namespace Cyh.Net.Reflection
             return obj.TryConvertTo(typeof(T));
         }
 
+        /// <summary>
+        /// Call instance method by name
+        /// </summary>
+        /// <param name="obj">instance</param>
+        /// <param name="methodName">Name of method to invoke</param>
+        /// <param name="parameters">Parameters of called method</param>
+        /// <returns>Return value when called method has return value, otherwise null</returns>
         public static object? CallMethod(this object obj, string methodName, params object[]? parameters)
         {
             try
@@ -777,6 +823,13 @@ namespace Cyh.Net.Reflection
             }
         }
 
+        /// <summary>
+        /// Call static method by name
+        /// </summary>
+        /// <typeparam name="T">Type contain the target method</typeparam>
+        /// <param name="methodName">Name of method to invoke</param>
+        /// <param name="parameters">Parameters of called method<</param>
+        /// <returns>Return value when called method has return value, otherwise null</returns>
         public static object? CallStaticMethod<T>(string methodName, params object[]? parameters)
         {
             try
@@ -795,45 +848,98 @@ namespace Cyh.Net.Reflection
             }
         }
 
-
+        /// <summary>
+        /// Set property value by Expression instead of PropertyInfo.SetValue()
+        /// </summary>
+        /// <param name="propertyInfo">Target property</param>
+        /// <param name="target">Target object instance</param>
+        /// <param name="value">Value to set</param>
         public static void SetValueEx(this PropertyInfo propertyInfo, object? target, object? value)
         {
             GetSetValueDelegate(propertyInfo).Invoke(target, value);
         }
 
+        /// <summary>
+        /// Get property value by Expression instead of PropertyInfo.GetValue()
+        /// </summary>
+        /// <param name="propertyInfo">Target property</param>
+        /// <param name="target">Target object instance</param>
+        /// <returns>Value of property</returns>
         public static object? GetValueEx(this PropertyInfo propertyInfo, object? target)
         {
             return GetGetValueDelegate(propertyInfo).Invoke(target);
         }
 
-        public static Expression<Func<TSource, TResult>> GetMapForwardExpression<TSource, TResult>()
+        /// <summary>
+        /// Get Expression accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns>x =&gt; new <typeparamref name="TResult"/>{ ... }</returns>
+        public static Expression<Func<TSource, TResult>> GetMapForwardExpression<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().SelectForwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).SelectForwardImpl;
         }
 
-        public static Expression<Func<TResult, TSource>> GetMapBackwardExpression<TSource, TResult>()
+        /// <summary>
+        /// Get Expression accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns>x =&gt; new <typeparamref name="TSource"/>{ ... }</returns>
+        public static Expression<Func<TResult, TSource>> GetMapBackwardExpression<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().SelectBackwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).SelectBackwardImpl;
         }
 
-        public static Func<TSource, TResult> GetMapCastForwardDelegate<TSource, TResult>()
+        /// <summary>
+        /// Get convert function from <typeparamref name="TSource"/> to <typeparamref name="TResult"/> accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns><typeparamref name="TResult"/> Func(<typeparamref name="TSource"/> src) </returns>
+        public static Func<TSource, TResult> GetMapCastForwardDelegate<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().GetForwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).GetForwardImpl;
         }
 
-        public static Func<TResult, TSource> GetMapCastBackwardDelegate<TSource, TResult>()
+        /// <summary>
+        /// Get convert function from <typeparamref name="TResult"/> to <typeparamref name="TSource"/> accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns><typeparamref name="TSource"/> Func(<typeparamref name="TResult"/> src) </returns>
+        public static Func<TResult, TSource> GetMapCastBackwardDelegate<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().GetBackwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).GetBackwardImpl;
         }
 
-        public static Action<TSource, TResult> GetMapAssignForwardDelegate<TSource, TResult>()
+        /// <summary>
+        /// Get set member function from <typeparamref name="TSource"/> to <typeparamref name="TResult"/> accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns>void Func(<typeparamref name="TSource"/> src, <typeparamref name="TResult"/> dst)</returns>
+        public static Action<TSource, TResult> GetMapAssignForwardDelegate<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().SetForwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).SetForwardImpl;
         }
 
-        public static Action<TResult, TSource> GetMapAssignBackwardDelegate<TSource, TResult>()
+        /// <summary>
+        /// Get set member function from <typeparamref name="TResult"/> to <typeparamref name="TSource"/> accroding to <see cref="MapFromAttribute"/>
+        /// </summary>
+        /// <typeparam name="TSource">Source type</typeparam>
+        /// <typeparam name="TResult">Target type</typeparam>
+        /// <param name="mark">Aadditional mark for identity</param>
+        /// <returns>void Func(<typeparamref name="TResult"/> src, <typeparamref name="TSource"/> dst)</returns>
+        public static Action<TResult, TSource> GetMapAssignBackwardDelegate<TSource, TResult>(string mark = "")
         {
-            return GetMappingDelegates<TSource, TResult>().SetBackwardImpl;
+            return GetMappingDelegates<TSource, TResult>(mark).SetBackwardImpl;
         }
     }
 }
