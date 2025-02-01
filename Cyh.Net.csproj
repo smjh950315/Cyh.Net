@@ -9,8 +9,4 @@
     <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Reflection\" />
-  </ItemGroup>
-
 </Project>
