@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 
 namespace Cyh.Net.Reflection
 {
-    public static class ObjectHelper
+    public static partial class ObjectHelper
     {
         abstract class MappingDelegate
         {
@@ -52,10 +52,6 @@ namespace Cyh.Net.Reflection
         static readonly Dictionary<Type, Delegate> ParameterlessContructDelegates;
         static readonly MethodInfo ExpressionLambda__Expr_Bool_ParamExprEnumerable__;
         static readonly MethodInfo Mapper__GetSetValueAction_;
-        static readonly MethodInfo Mapper__TestDelegates_;
-        public static bool CachePropertyDelegates = true;
-        public static bool CacheSelectExpressions = true;
-
         static ObjectHelper()
         {
             MappingDelegates = new();
@@ -68,46 +64,10 @@ namespace Cyh.Net.Reflection
                 ExpressionLambda__Expr_Bool_ParamExprEnumerable__ = methodForSelectorExpr;
             }
             Mapper__GetSetValueAction_ = typeof(ObjectHelper).GetMethod("Impl_GetSetValueAction", BindingFlags.Static | BindingFlags.NonPublic)!;
-            Mapper__TestDelegates_ = typeof(ObjectHelper).GetMethod("Impl_TestDelegates", BindingFlags.Static | BindingFlags.NonPublic)!;
         }
         static Action<TSource?, TResult?> Impl_GetSetValueAction<TSource, TResult>(Action<object?, object?> func)
         {
             return (src, dst) => func(src, dst);
-        }
-        static void Impl_TestDelegates<TSource, TResult>(MappingDelegate _mappingDelegate)
-        {
-            MappingDelegate<TSource, TResult> mappingDelegate = (MappingDelegate<TSource, TResult>)_mappingDelegate;
-            Console.WriteLine($"SourceType: {mappingDelegate.SourceType.Name}");
-            Console.WriteLine($"TargetType: {mappingDelegate.ResultType.Name}");
-            {
-                Console.Write($"Testing: {mappingDelegate.SourceType.Name} Function({mappingDelegate.ResultType.Name}) ...");
-                ConstructBy(out TSource? _source);
-                Debug.Assert(_source != null);
-                TResult? _result = mappingDelegate.GetForwardImpl(_source);
-                Debug.Assert(_result != null);
-                Console.WriteLine("Ok");
-            }
-            {
-                Console.Write($"Testing: {mappingDelegate.ResultType.Name} Function({mappingDelegate.SourceType.Name}) ...");
-                ConstructBy(out TResult? _result);
-                Debug.Assert(_result != null);
-                TSource? _source = mappingDelegate.GetBackwardImpl(_result);
-                Debug.Assert(_source != null);
-                Console.WriteLine("Ok");
-            }
-            ConstructBy(out TSource? source);
-            ConstructBy(out TResult? result);
-            Debug.Assert(source != null && result != null);
-            Console.Write($"Testing: void Function({mappingDelegate.SourceType.Name}, {mappingDelegate.ResultType.Name}) ...");
-            mappingDelegate.SetForwardImpl(source, result);
-            Console.WriteLine("Ok");
-            Console.Write($"Testing: void Function({mappingDelegate.ResultType.Name}, {mappingDelegate.SourceType.Name}) ...");
-            mappingDelegate.SetBackwardImpl(result, source);
-            Console.WriteLine("Ok");
-            IQueryable<TSource> queryable = new List<TSource>().AsQueryable();
-            Console.Write($"Testing: Select<{mappingDelegate.SourceType.Name}>(x => new {mappingDelegate.ResultType.Name}) ...");
-            IQueryable<TResult> resultQueryable = queryable.Select(mappingDelegate.SelectForwardImpl);
-            Console.WriteLine("Ok");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -393,7 +353,6 @@ namespace Cyh.Net.Reflection
             }
             return func;
         }
-
         static MappingDelegate GetMappingDelegates(Type sourceType, Type targetType, string mark)
         {
             string hash;
@@ -418,8 +377,7 @@ namespace Cyh.Net.Reflection
         {
             return (MappingDelegate<TSource, TResult>)GetMappingDelegates(typeof(TSource), typeof(TResult), mark);
         }
-
-        private static object? GetValue(object? instance, MemberInfo memberInfo)
+        static object? GetValue(object? instance, MemberInfo memberInfo)
         {
             if (memberInfo is PropertyInfo propertyInfo)
             {
@@ -434,7 +392,7 @@ namespace Cyh.Net.Reflection
                 return null;
             }
         }
-        private static void SetValue(object? instance, object? value, MemberInfo memberInfo)
+        static void SetValue(object? instance, object? value, MemberInfo memberInfo)
         {
             if (memberInfo is PropertyInfo propertyInfo)
             {
@@ -449,18 +407,23 @@ namespace Cyh.Net.Reflection
                 throw new InvalidOperationException("nuknow member information");
             }
         }
-        private static MemberInfo[] GetMemberInfos(Type type, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All)
+        static MemberInfo[] GetMemberInfos(Type type, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All)
         {
             return type.GetMembers(bindingFlags);
         }
-        private static MemberInfo? GetMemberInfo(Type type, string name, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All)
+        static MemberInfo? GetMemberInfo(Type type, string name, BindingFlags bindingFlags = MemberBindingFlags.InstanceMember | MemberBindingFlags.Accessable_All)
         {
             return type.GetMember(name, bindingFlags).FirstOrDefault();
         }
-        private static MemberInfo? GetStaticMemberInfo(Type type, string name)
+        static MemberInfo? GetStaticMemberInfo(Type type, string name)
         {
             return GetMemberInfo(type, name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         }
+    }
+    public static partial class ObjectHelper
+    {
+        public static bool CachePropertyDelegates = true;
+        public static bool CacheSelectExpressions = true;
 
         /// <summary>
         /// Get value of member named <paramref name="name"/> in <paramref name="obj"/>
