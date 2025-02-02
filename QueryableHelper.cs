@@ -29,11 +29,23 @@ namespace Cyh.Net
             typeof(DateTime?)
         ];
         protected static readonly MethodInfo ExpressionLambda__Expr_Bool_ParamExprEnumerable__;
+        static readonly Dictionary<PropertyInfo, IEnumerable<MapFromAttribute>> CachedMapAttribute;
+        static IEnumerable<MapFromAttribute> GetMapFromAttributes(PropertyInfo propertyInfo)
+        {
+            if (!CachedMapAttribute.TryGetValue(propertyInfo, out IEnumerable<MapFromAttribute>? values))
+            {
+                values = propertyInfo.GetCustomAttributes<MapFromAttribute>();
+                CachedMapAttribute[propertyInfo] = values;
+            }
+            return values;
+        }
+
         static QueryableHelper()
         {
             MethodInfo? methodForSelectorExpr = typeof(Expression).GetMethod("Lambda", 1, [typeof(Expression), typeof(bool), typeof(IEnumerable<ParameterExpression>)]);
             Debug.Assert(methodForSelectorExpr != null);
             ExpressionLambda__Expr_Bool_ParamExprEnumerable__ = methodForSelectorExpr;
+            CachedMapAttribute = new();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,16 +72,20 @@ namespace Cyh.Net
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool AddAssignment(ref List<MemberAssignment> assignments, ref List<PropertyInfo> unusedTargetProperties, Expression parameter, PropertyInfo dstProperty, Type sourceType, string mark)
         {
-            if (sourceType.IsAnyOf(BuiltinDataTypes))
-            {
-                return false;
-            }
+            if (sourceType.IsBuiltinType()) return false;
             PropertyInfo[] sourceProperties = sourceType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             for (int i = 0; i < sourceProperties.Length; i++)
             {
                 PropertyInfo sourceProperty = sourceProperties[i];
                 Type sourceType_ = sourceProperty.PropertyType;
-                MapFromAttribute? mapFromAttribute = dstProperty.GetCustomAttributes<MapFromAttribute>(true).FirstOrDefault(x => x.SourceType == sourceType && x.SourcePropertyName == sourceProperty.Name);
+                MapFromAttribute? mapFromAttribute = null;
+
+                IEnumerable<MapFromAttribute> mapFromAttributes = GetMapFromAttributes(dstProperty);
+                if (mapFromAttributes.Any())
+                {
+                    mapFromAttribute = mapFromAttributes.FirstOrDefault(x => x.SourceType == sourceType && x.SourcePropertyName == sourceProperty.Name && !x.IsTargetReadOnly);
+                    mapFromAttribute ??= mapFromAttributes.FirstOrDefault(x => x.SourceType == null && x.SourcePropertyName == sourceProperty.Name && !x.IsTargetReadOnly);
+                }
                 if (mapFromAttribute == null)
                 {
                     MemberExpression parameter_ = Expression.Property(parameter, sourceProperty);

@@ -1,5 +1,7 @@
-﻿namespace Cyh.Net {
-    public static class Typedef {
+﻿namespace Cyh.Net
+{
+    public static class Typedef
+    {
 
         public static readonly Type[] Numeric = {
             typeof(byte),typeof(sbyte),typeof(ushort),typeof(short),

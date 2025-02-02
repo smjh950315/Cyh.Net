@@ -7,6 +7,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PublishAot>false</PublishAot>
     <SignAssembly>False</SignAssembly>
+    <PackAsTool>True</PackAsTool>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using Cyh.Net.Internal;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
@@ -5,8 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using Cyh.Net.DependencyInjection;
-using Cyh.Net.Internal;
 
 namespace Cyh.Net
 {
@@ -217,6 +216,12 @@ namespace Cyh.Net
             return false;
         }
 
+        public static bool IsBuiltinType(this Type type)
+        {
+            if (type == null) return false;
+            return type.Assembly.GetName().Name == "System.Private.CoreLib";
+        }
+
         /// <summary>
         /// Get not null type
         /// </summary>
@@ -402,31 +407,6 @@ namespace Cyh.Net
         {
             serviceInstance = serviceProvider.GetService(typeof(T)) as T;
             return serviceInstance != null;
-        }
-
-        /// <summary>
-        /// Inject the service <typeparamref name="T"/> if <typeparamref name="T"/> is not found in service provider
-        /// </summary>
-        /// <typeparam name="T">Service type</typeparam>
-        /// <param name="implFactory">The implement of service factory</param>
-        public static void InjectScopedIfNotExisting<T>(this IDependencyInjectionData diData, Func<IServiceProvider, T> implFactory) where T : class
-        {
-            object? service = diData.GetService(typeof(T));
-            if (service == null)
-            {
-                diData.AddScoped(typeof(T), implFactory);
-            }
-        }
-
-        /// <summary>
-        /// Inject the service <typeparamref name="T"/> if <typeparamref name="T"/> is not found in service provider
-        /// </summary>
-        /// <typeparam name="T">Service type</typeparam>
-        /// <param name="factoryMethod">The implement of service factory</param>
-        public static void InjectScopedIfNotExisting<T>(this IDependencyInjectionData diService, Func<T?> factoryMethod) where T : class
-        {
-            var implFactory = Lib.MakeServiceFactory(factoryMethod);
-            InjectScopedIfNotExisting(diService, implFactory);
         }
 
         public static Expression<Func<T, bool>> UpdateExpression<T>(this Expression<Func<T, bool>>? originalExpression, Expression<Func<T, bool>> additionalExpression, bool _and)

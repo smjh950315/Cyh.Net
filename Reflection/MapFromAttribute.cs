@@ -1,27 +1,33 @@
 ﻿namespace Cyh.Net.Reflection
 {
+    /// <summary>
+    /// Attribute used for map property value with specific name from specific source type
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class MapFromAttribute : Attribute
     {
         /// <summary>
-        /// 是否唯讀
+        /// Whether the source property is readonly
         /// </summary>
         public bool IsSourceReadOnly { get; }
+
         /// <summary>
-        /// 是否唯讀
+        /// Whether the target property is readonly
         /// </summary>
         public bool IsTargetReadOnly { get; }
+
         /// <summary>
-        /// 特殊標示
+        /// Customized mark, split by ","
         /// </summary>
         public string Mark { get; }
+
         /// <summary>
-        /// 來源型別
+        /// Type of source
         /// </summary>
         public virtual Type? SourceType { get; }
 
         /// <summary>
-        /// 目標欄位名稱
+        /// Property name of source type
         /// </summary>
         public string SourcePropertyName { get; set; }
 
@@ -34,11 +40,15 @@
         }
     }
 
+    /// <summary>
+    /// Attribute used for map property value with specific name from <typeparamref name="TSource"/> 
+    /// </summary>
+    /// <typeparam name="TSource">Type of source</typeparam>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class MapFromAttribute<TSource> : MapFromAttribute
     {
         /// <summary>
-        /// 來源型別
+        /// Type of source
         /// </summary>
         public override Type? SourceType => typeof(TSource);
 

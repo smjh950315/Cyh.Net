@@ -603,7 +603,7 @@ namespace Cyh.Net.Reflection
         public static bool IsUnmanaged<T>() => typeof(T).IsUnmanaged();
 
         /// <summary>
-        /// Indicate wheather a type is collection
+        /// Indicate whether a type is collection
         /// </summary>
         /// <returns>True if current type is collection, otherwise false</returns>
         public static bool IsCollection(this Type type)
@@ -612,7 +612,7 @@ namespace Cyh.Net.Reflection
         }
 
         /// <summary>
-        /// Indicate wheather a type is collection
+        /// Indicate whether a type is collection
         /// </summary>
         /// <returns>True if the type is collection, otherwise false</returns>
         public static bool IsCollection<T>()
