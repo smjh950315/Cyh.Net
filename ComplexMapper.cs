@@ -131,6 +131,8 @@ namespace Cyh.Net
             public required object Expression { get; set; }
             public required object Getter { get; set; }
             public required object Setter { get; set; }
+            public required object GetterR { get; set; }
+            public required object SetterR { get; set; }
         }
 
         static Action<TSource, TResult> Impl_GetSetter<TSource, TResult>(List<Action<object?, object?>> actions)
@@ -164,10 +166,33 @@ namespace Cyh.Net
             List<MemberAssignment> assignments = [];
             List<PropertyInfo> setDefaultProperties = targetProps.ToList();
             List<Action<object?, object?>> actions = [];
+            List<Action<object?, object?>> actionsR = [];
             for (int i = 0; i < targetProps.Length; i++)
             {
                 PropertyInfo targetProperty = targetProps[i];
+                if (!targetProperty.CanWrite) continue;
                 AddAssignment(ref assignments, ref actions, null, ref setDefaultProperties, parameter, targetProperty, sourceType, mark);
+                MapFromAttribute? mapFromAttribute = GetMapFromAttributes(targetProperty).FirstOrDefault(x => x.SourceType == sourceType && !x.IsSourceReadOnly);
+                if (mapFromAttribute != null && sourceType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Any(x => x.CanWrite && x.Name == mapFromAttribute.SourcePropertyName))
+                {
+                    IEnumerable<string> marks = mapFromAttribute.Mark?.Split(',')?.Select(x => x.Trim())?.Where(x => !x.IsNullOrEmpty()) ?? [];
+                    if (marks.Any())
+                    {
+                        if (!marks.Contains(mark))
+                        {
+                            continue;
+                        }
+                    }
+                    PropertyInfo? srcProp = sourceType.GetProperties(BindingFlags.Instance | BindingFlags.Public).FirstOrDefault(x => x.CanWrite && x.Name == mapFromAttribute.SourcePropertyName);
+                    if (srcProp != null)
+                    {
+                        actionsR.Add((dst, src) =>
+                        {
+                            if (src == null) return;
+                            srcProp.SetValueEx(src, targetProperty.GetValueEx(dst));
+                        });
+                    }
+                }
             }
             GetSetDefaultMemberAssignment(ref assignments, setDefaultProperties);
             Type funcType = typeof(Func<,>).MakeGenericType(sourceType, targetType);
@@ -176,13 +201,19 @@ namespace Cyh.Net
             object expr = ExpressionLambda__Expr_Bool_ParamExprEnumerable__.MakeGenericMethod(funcType).Invoke(null, [memberInit, false, new ParameterExpression[] { parameter }])!;
             object? getter = GetGetter__.MakeGenericMethod(sourceType, targetType).Invoke(null, [actions]);
             object? setter = GetSetter__.MakeGenericMethod(sourceType, targetType).Invoke(null, [actions]);
+            object? getterR = GetGetter__.MakeGenericMethod(targetType, sourceType).Invoke(null, [actionsR]);
+            object? setterR = GetSetter__.MakeGenericMethod(targetType, sourceType).Invoke(null, [actionsR]);
             Debug.Assert(setter != null);
             Debug.Assert(getter != null);
+            Debug.Assert(setterR != null);
+            Debug.Assert(getterR != null);
             return new MappingInformations()
             {
                 Expression = expr,
                 Getter = getter,
-                Setter = setter
+                Setter = setter,
+                GetterR = getterR,
+                SetterR = setterR,
             };
         }
 
@@ -201,7 +232,28 @@ namespace Cyh.Net
         {
             return (Action<TSource, TResult>)CreateMappingInformationsOfComplexType(typeof(TSource), typeof(TResult), mark).Setter;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Func<TResult, TSource> CreateMappingGetterROfComplexType<TSource, TResult>(string mark)
+        {
+            return (Func<TResult, TSource>)CreateMappingInformationsOfComplexType(typeof(TSource), typeof(TResult), mark).GetterR;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Action<TResult, TSource> CreateMappingSetterROfComplexType<TSource, TResult>(string mark)
+        {
+            return (Action<TResult, TSource>)CreateMappingInformationsOfComplexType(typeof(TSource), typeof(TResult), mark).SetterR;
+        }
         public static IComplexMapper<TSource> GetComplexMapper<TSource>(IQueryable<TSource> sources) => new ComplexMapper<TSource>(sources);
+
+        public static TSource FromResult<TSource, TResult>(TResult result, string mark)
+        {
+            var mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
+            return mapper.FromResult(result, mark);
+        }
+        public static void FromResult<TSource, TResult>(TResult result, TSource source, string mark)
+        {
+            var mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
+            mapper.FromResult(result, source, mark);
+        }
     }
 
     internal interface IComplexMapperImpl
@@ -209,18 +261,23 @@ namespace Cyh.Net
         public object GetExpressionByMark(string mark);
         public object GetGetterByMark(string mark);
         public object GetSetterByMark(string mark);
+        public object GetGetterRByMark(string mark);
+        public object GetSetterRByMark(string mark);
     }
     internal class ComplexMapperImpl<TSource, TResult> : IComplexMapperImpl
     {
         static readonly Dictionary<string, Expression<Func<TSource, TResult>>> _cacheExpressions;
         static readonly Dictionary<string, Func<TSource, TResult>> _cacheGetters;
         static readonly Dictionary<string, Action<TSource, TResult>> _cacheSetters;
-
+        static readonly Dictionary<string, Func<TResult, TSource>> _cacheGettersR;
+        static readonly Dictionary<string, Action<TResult, TSource>> _cacheSettersR;
         static ComplexMapperImpl()
         {
             _cacheExpressions = [];
             _cacheGetters = [];
             _cacheSetters = [];
+            _cacheGettersR = [];
+            _cacheSettersR = [];
         }
         public object GetExpressionByMark(string mark)
         {
@@ -248,6 +305,26 @@ namespace Cyh.Net
             {
                 expr = ComplexMapper.CreateMappingSetterOfComplexType<TSource, TResult>(mark);
                 _cacheSetters[mark] = expr;
+            }
+            return expr;
+        }
+
+        public object GetGetterRByMark(string mark)
+        {
+            if (!_cacheGettersR.TryGetValue(mark, out var expr))
+            {
+                expr = ComplexMapper.CreateMappingGetterROfComplexType<TSource, TResult>(mark);
+                _cacheGettersR[mark] = expr;
+            }
+            return expr;
+        }
+
+        public object GetSetterRByMark(string mark)
+        {
+            if (!_cacheSettersR.TryGetValue(mark, out var expr))
+            {
+                expr = ComplexMapper.CreateMappingSetterROfComplexType<TSource, TResult>(mark);
+                _cacheSettersR[mark] = expr;
             }
             return expr;
         }
@@ -292,6 +369,28 @@ namespace Cyh.Net
             }
             var expr = (Action<TSource, TResult>)impl.GetSetterByMark(mark);
             expr(source, result);
+        }
+
+        internal TSource FromResult<TResult>(TResult result, string mark)
+        {
+            if (!_cacheImplementations.TryGetValue(typeof(TResult), out IComplexMapperImpl? impl))
+            {
+                impl = new ComplexMapperImpl<TSource, TResult>();
+                _cacheImplementations[typeof(TResult)] = impl;
+            }
+            var expr = (Func<TResult, TSource>)impl.GetGetterRByMark(mark);
+            return expr(result);
+        }
+
+        internal void FromResult<TResult>(TResult result, TSource source, string mark)
+        {
+            if (!_cacheImplementations.TryGetValue(typeof(TResult), out IComplexMapperImpl? impl))
+            {
+                impl = new ComplexMapperImpl<TSource, TResult>();
+                _cacheImplementations[typeof(TResult)] = impl;
+            }
+            var expr = (Action<TResult, TSource>)impl.GetSetterRByMark(mark);
+            expr(result, source);
         }
     }
 }
