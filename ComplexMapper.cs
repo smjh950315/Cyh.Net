@@ -246,12 +246,12 @@ namespace Cyh.Net
 
         public static TSource FromResult<TSource, TResult>(TResult result, string mark)
         {
-            var mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
+            ComplexMapper<TSource> mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
             return mapper.FromResult(result, mark);
         }
         public static void FromResult<TSource, TResult>(TResult result, TSource source, string mark)
         {
-            var mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
+            ComplexMapper<TSource> mapper = new ComplexMapper<TSource>(Enumerable.Empty<TSource>().AsQueryable());
             mapper.FromResult(result, source, mark);
         }
     }
@@ -291,7 +291,7 @@ namespace Cyh.Net
 
         public object GetGetterByMark(string mark)
         {
-            if (!_cacheGetters.TryGetValue(mark, out var expr))
+            if (!_cacheGetters.TryGetValue(mark, out Func<TSource, TResult>? expr))
             {
                 expr = ComplexMapper.CreateMappingGetterOfComplexType<TSource, TResult>(mark);
                 _cacheGetters[mark] = expr;
@@ -301,7 +301,7 @@ namespace Cyh.Net
 
         public object GetSetterByMark(string mark)
         {
-            if (!_cacheSetters.TryGetValue(mark, out var expr))
+            if (!_cacheSetters.TryGetValue(mark, out Action<TSource, TResult>? expr))
             {
                 expr = ComplexMapper.CreateMappingSetterOfComplexType<TSource, TResult>(mark);
                 _cacheSetters[mark] = expr;
@@ -311,7 +311,7 @@ namespace Cyh.Net
 
         public object GetGetterRByMark(string mark)
         {
-            if (!_cacheGettersR.TryGetValue(mark, out var expr))
+            if (!_cacheGettersR.TryGetValue(mark, out Func<TResult, TSource>? expr))
             {
                 expr = ComplexMapper.CreateMappingGetterROfComplexType<TSource, TResult>(mark);
                 _cacheGettersR[mark] = expr;
@@ -321,7 +321,7 @@ namespace Cyh.Net
 
         public object GetSetterRByMark(string mark)
         {
-            if (!_cacheSettersR.TryGetValue(mark, out var expr))
+            if (!_cacheSettersR.TryGetValue(mark, out Action<TResult, TSource>? expr))
             {
                 expr = ComplexMapper.CreateMappingSetterROfComplexType<TSource, TResult>(mark);
                 _cacheSettersR[mark] = expr;
@@ -346,7 +346,7 @@ namespace Cyh.Net
                 _cacheImplementations[typeof(TResult)] = impl;
             }
             Expression<Func<TSource, TResult>> expr = (Expression<Func<TSource, TResult>>)impl.GetExpressionByMark(mark);
-            return _source.Select(expr);
+            return this._source.Select(expr);
         }
 
         public TResult GetResult<TResult>(TSource source, string mark)
@@ -356,7 +356,7 @@ namespace Cyh.Net
                 impl = new ComplexMapperImpl<TSource, TResult>();
                 _cacheImplementations[typeof(TResult)] = impl;
             }
-            var expr = (Func<TSource, TResult>)impl.GetGetterByMark(mark);
+            Func<TSource, TResult> expr = (Func<TSource, TResult>)impl.GetGetterByMark(mark);
             return expr(source);
         }
 
@@ -367,7 +367,7 @@ namespace Cyh.Net
                 impl = new ComplexMapperImpl<TSource, TResult>();
                 _cacheImplementations[typeof(TResult)] = impl;
             }
-            var expr = (Action<TSource, TResult>)impl.GetSetterByMark(mark);
+            Action<TSource, TResult> expr = (Action<TSource, TResult>)impl.GetSetterByMark(mark);
             expr(source, result);
         }
 
@@ -378,7 +378,7 @@ namespace Cyh.Net
                 impl = new ComplexMapperImpl<TSource, TResult>();
                 _cacheImplementations[typeof(TResult)] = impl;
             }
-            var expr = (Func<TResult, TSource>)impl.GetGetterRByMark(mark);
+            Func<TResult, TSource> expr = (Func<TResult, TSource>)impl.GetGetterRByMark(mark);
             return expr(result);
         }
 
@@ -389,7 +389,7 @@ namespace Cyh.Net
                 impl = new ComplexMapperImpl<TSource, TResult>();
                 _cacheImplementations[typeof(TResult)] = impl;
             }
-            var expr = (Action<TResult, TSource>)impl.GetSetterRByMark(mark);
+            Action<TResult, TSource> expr = (Action<TResult, TSource>)impl.GetSetterRByMark(mark);
             expr(result, source);
         }
     }

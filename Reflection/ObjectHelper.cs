@@ -19,14 +19,14 @@ namespace Cyh.Net.Reflection
 
             public ParameterUpdateVisitor(ParameterExpression oldParameter, ParameterExpression newParameter)
             {
-                _oldParameter = oldParameter;
-                _newParameter = newParameter;
+                this._oldParameter = oldParameter;
+                this._newParameter = newParameter;
             }
 
             protected override Expression VisitParameter(ParameterExpression node)
             {
-                if (object.ReferenceEquals(node, _oldParameter))
-                    return _newParameter;
+                if (object.ReferenceEquals(node, this._oldParameter))
+                    return this._newParameter;
 
                 return base.VisitParameter(node);
             }
@@ -687,7 +687,7 @@ namespace Cyh.Net.Reflection
 #pragma warning restore CS8602
                 }
 
-                var constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.NonPublic, types);
+                ConstructorInfo? constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.NonPublic, types);
 
                 output = constructor?.Invoke(args) ?? default;
 
@@ -705,7 +705,7 @@ namespace Cyh.Net.Reflection
         /// <returns>True if succeed, otherwise false</returns>
         public static bool ConstructBy<T>([NotNullWhen(true)] out T? output, params object[] args)
         {
-            if (ConstructBy(typeof(T), out var meta, args))
+            if (ConstructBy(typeof(T), out object? meta, args))
             {
                 output = (T)meta;
                 return true;
@@ -823,7 +823,7 @@ namespace Cyh.Net.Reflection
             try
             {
                 Type[] types = parameters?.Select(p => p.GetType()).ToArray() ?? Array.Empty<Type>();
-                var method = obj.GetType().GetMethod(methodName, types);
+                MethodInfo? method = obj.GetType().GetMethod(methodName, types);
                 if (method != null)
                 {
                     return method.Invoke(obj, parameters);
@@ -848,7 +848,7 @@ namespace Cyh.Net.Reflection
             try
             {
                 Type[] types = parameters?.Select(p => p.GetType()).ToArray() ?? Array.Empty<Type>();
-                var method = typeof(T).GetMethod(methodName, types);
+                MethodInfo? method = typeof(T).GetMethod(methodName, types);
                 if (method != null)
                 {
                     return method.Invoke(null, parameters);
@@ -1070,8 +1070,8 @@ namespace Cyh.Net.Reflection
         {
             if (values.IsNullOrEmpty() || others.IsNullOrEmpty()) { return false; }
             if (values.Count() != others.Count()) { return false; }
-            var itSelf = values.GetEnumerator();
-            var itOther = others.GetEnumerator();
+            IEnumerator<T> itSelf = values.GetEnumerator();
+            IEnumerator<T> itOther = others.GetEnumerator();
             while (itSelf.MoveNext() && itOther.MoveNext())
             {
                 if (!itSelf.Current.Equals(itOther.Current)) { return false; }
@@ -1110,8 +1110,8 @@ namespace Cyh.Net.Reflection
             }
             else if (type.IsValueType)
             {
-                var members = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var member in members)
+                FieldInfo[] members = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                foreach (FieldInfo member in members)
                 {
                     if (!IsUnmanaged(member.FieldType)) return false;
                 }
@@ -1343,7 +1343,7 @@ namespace Cyh.Net.Reflection
                 {
                     constructorTypes[i] = constructArgs[i].GetType();
                 }
-                var constructor = type.GetConstructor(constructorTypes);
+                ConstructorInfo? constructor = type.GetConstructor(constructorTypes);
                 if (constructor == null) { return null; }
                 return constructor.Invoke(constructArgs);
             }
@@ -1393,7 +1393,7 @@ namespace Cyh.Net.Reflection
                 return additionalExpression;
             }
             // get the visitor
-            var visitor = new ParameterUpdateVisitor(originalExpression.Parameters.First(), additionalExpression.Parameters.First());
+            ParameterUpdateVisitor visitor = new ParameterUpdateVisitor(originalExpression.Parameters.First(), additionalExpression.Parameters.First());
             // replace the parameter in the original expression
             originalExpression = visitor.Visit(originalExpression) as Expression<Func<T, bool>>;
 #pragma warning disable CS8602
