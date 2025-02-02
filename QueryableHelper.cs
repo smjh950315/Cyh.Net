@@ -12,7 +12,7 @@ namespace Cyh.Net
     }
     public class QueryableHelper
     {
-        protected static readonly Type[] BuiltinDataTypes =
+        internal static readonly Type[] BuiltinDataTypes =
         [
             typeof(string),
             typeof(int),
@@ -28,7 +28,7 @@ namespace Cyh.Net
             typeof(DateTime),
             typeof(DateTime?)
         ];
-        protected static readonly MethodInfo ExpressionLambda__Expr_Bool_ParamExprEnumerable__;
+        internal static readonly MethodInfo ExpressionLambda__Expr_Bool_ParamExprEnumerable__;
         static readonly Dictionary<PropertyInfo, IEnumerable<MapFromAttribute>> CachedMapAttribute;
         static IEnumerable<MapFromAttribute> GetMapFromAttributes(PropertyInfo propertyInfo)
         {
@@ -133,7 +133,7 @@ namespace Cyh.Net
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static Expression<Func<TSource, TResult>> CreateMappingExpressionOfComplexType<TSource, TResult>(string mark)
+        internal static Expression<Func<TSource, TResult>> CreateMappingExpressionOfComplexType<TSource, TResult>(string mark)
         {
             return (Expression<Func<TSource, TResult>>)CreateMappingExpressionOfComplexType(typeof(TSource), typeof(TResult), mark);
         }
