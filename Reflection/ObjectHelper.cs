@@ -12,9 +12,6 @@ namespace Cyh.Net.Reflection
 {
     public static partial class ObjectHelper
     {
-        /// <summary>
-        /// updates the parameter in the expression
-        /// </summary>
         class ParameterUpdateVisitor : ExpressionVisitor
         {
             private ParameterExpression _oldParameter;
@@ -34,7 +31,6 @@ namespace Cyh.Net.Reflection
                 return base.VisitParameter(node);
             }
         }
-
         abstract class MappingDelegate
         {
             public abstract Type SourceType { get; }
