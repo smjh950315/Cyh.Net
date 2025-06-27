@@ -316,7 +316,7 @@ namespace Cyh.Net.Native
         /// <param name="addr">The origin pointer.</param>
         /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
         /// <returns>Pointer after shifting.</returns>
-        public static void* Shift_Unchecked<T>(void* addr, int offset)
+        static void* Shift_Unchecked<T>(void* addr, int offset)
         {
             ThrowNullPointer(addr);
             return (T*)addr + offset;
@@ -328,7 +328,7 @@ namespace Cyh.Net.Native
         /// <param name="addr">The origin pointer.</param>
         /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
         /// <param name="value">The value to set to the memory.</param>
-        public static void SetValueByteField_Unchecked<T>(void* addr, int offset, T value)
+        static void SetValueByteField_Unchecked<T>(void* addr, int offset, T value)
         {
             void* _addr = Shift_Unchecked<T>(addr, offset);
             Buffer.MemoryCopy(&value, _addr, sizeof(T), sizeof(T));
@@ -340,7 +340,7 @@ namespace Cyh.Net.Native
         /// <param name="addr">The origin pointer.</param>
         /// <param name="offset">The count of <typeparamref name="T"/> to shift.</param>
         /// <returns>The value on the memory offset.</returns>
-        public static T GetValueByteField_Unchecked<T>(void* addr, int offset)
+        static T GetValueByteField_Unchecked<T>(void* addr, int offset)
         {
             T result = default;
             void* _addr = Shift_Unchecked<T>(addr, offset);
@@ -351,7 +351,7 @@ namespace Cyh.Net.Native
         /// <summary>
         /// Get the managed array from the unmanaged memory block.
         /// </summary>
-        public static bool GetManagedArray_Unchecked<T>(void* src, ulong length, [NotNull] out T[]? array)
+        static bool GetManagedArray_Unchecked<T>(void* src, ulong length, [NotNull] out T[]? array)
         {
             if (length == 0)
             {
