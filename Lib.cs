@@ -194,48 +194,6 @@ namespace Cyh.Net
         }
 
         /// <summary>
-        /// Throw an ArgumentNullException if the value is null.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowNull<T>([NotNull] T? value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-        }
-
-        /// <summary>
-        /// Throw an ArgumentNullException if the value is null.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowNull<T, U>([NotNull] T? value1, [NotNull] U? value2)
-        {
-            ThrowNull(value1);
-            ThrowNull(value2);
-        }
-
-        /// <summary>
-        /// Throw an ArgumentNullException if the value is null.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowNull<T, U, V>([NotNull] T? value1, [NotNull] U? value2, [NotNull] V? value3)
-        {
-            ThrowNull(value1, value2);
-            ThrowNull(value3);
-        }
-
-        /// <summary>
-        /// Throw an ArgumentNullException if the value is null.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowNull<T, U, V, W>([NotNull] T? value1, [NotNull] U? value2, [NotNull] V? value3, [NotNull] W? value4)
-        {
-            ThrowNull(value1, value2, value3);
-            ThrowNull(value4);
-        }
-
-        /// <summary>
         /// Set global default message holder
         /// </summary>
         /// <param name="messageHolder">Function to handle string</param>
@@ -262,6 +220,54 @@ namespace Cyh.Net
                 }
                 return instance;
             };
+        }
+
+        private class ScopeLiftTimeHandler : IDisposable
+        {
+            private bool disposedValue;
+
+            Action? _onFinally;
+
+            public ScopeLiftTimeHandler(Action onFinally)
+            {
+                this._onFinally = onFinally;
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!this.disposedValue)
+                {
+                    if (disposing)
+                    {
+                        this._onFinally?.Invoke();
+                        // TODO: 處置受控狀態 (受控物件)
+                        this._onFinally = null;
+                    }
+
+                    // TODO: 釋出非受控資源 (非受控物件) 並覆寫完成項
+                    // TODO: 將大型欄位設為 Null
+                    this.disposedValue = true;
+                }
+            }
+
+            // TODO: 僅有當 'Dispose(bool disposing)' 具有會釋出非受控資源的程式碼時，才覆寫完成項
+            ~ScopeLiftTimeHandler()
+            {
+                // 請勿變更此程式碼。請將清除程式碼放入 'Dispose(bool disposing)' 方法
+                this.Dispose(disposing: false);
+            }
+
+            public void Dispose()
+            {
+                // 請勿變更此程式碼。請將清除程式碼放入 'Dispose(bool disposing)' 方法
+                this.Dispose(disposing: true);
+                GC.SuppressFinalize(this);
+            }
+        }
+
+        public static IDisposable CreateFinally(Action onFinally)
+        {
+            return new ScopeLiftTimeHandler(onFinally);
         }
     }
 }

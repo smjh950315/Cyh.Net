@@ -26,7 +26,7 @@ namespace Cyh.Net.Native
                 return m_customReallocCallback(old, size);
             }
 #if NET7_0_OR_GREATER 
-            return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (nint)size);
+            return (void*)Marshal.ReAllocHGlobal((nint)old, (nint)size);
 #else                  
             return (void*)Marshal.ReAllocHGlobal((IntPtr)old, (IntPtr)(long)size);
 #endif
@@ -39,7 +39,7 @@ namespace Cyh.Net.Native
                 m_customFreeCallback(ptr);
                 return;
             }
-            Marshal.FreeHGlobal((IntPtr)ptr);
+            Marshal.FreeHGlobal((nint)ptr);
         }
 
         /// <summary>
