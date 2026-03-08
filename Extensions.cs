@@ -283,7 +283,7 @@ public static class Extensions
         return acceptEqual ? min < value && value < max : min <= value && value <= max;
     }
 
-    public static T ParseOrValue<T>(this string? input, T _default = default) where T : struct 
+    public static T ParseOrValue<T>(this string? input, T _default = default) where T : struct
     {
         var _delegate = GetTryParseMethod<T>();
         if (_delegate == null)

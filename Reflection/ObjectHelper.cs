@@ -836,16 +836,16 @@ namespace Cyh.Net.Reflection
         /// <summary>
         /// Call static method by name
         /// </summary>
-        /// <typeparam name="T">Type contain the target method</typeparam>
+        /// <param name="type">Type contain the target method</param>
         /// <param name="methodName">Name of method to invoke</param>
         /// <param name="parameters">Parameters of called method<</param>
         /// <returns>Return value when called method has return value, otherwise null</returns>
-        public static object? CallStaticMethod<T>(string methodName, params object[]? parameters)
+        public static object? CallStaticMethod(Type type, string methodName, params object[]? parameters)
         {
             try
             {
                 Type[] types = parameters?.Select(p => p.GetType()).ToArray() ?? Array.Empty<Type>();
-                MethodInfo? method = typeof(T).GetMethod(methodName, types);
+                MethodInfo? method = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, types);
                 if (method != null)
                 {
                     return method.Invoke(null, parameters);
@@ -856,6 +856,18 @@ namespace Cyh.Net.Reflection
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Call static method by name
+        /// </summary>
+        /// <typeparam name="T">Type contain the target method</typeparam>
+        /// <param name="methodName">Name of method to invoke</param>
+        /// <param name="parameters">Parameters of called method<</param>
+        /// <returns>Return value when called method has return value, otherwise null</returns>
+        public static object? CallStaticMethod<T>(string methodName, params object[]? parameters)
+        {
+            return CallStaticMethod(typeof(T), methodName, parameters);
         }
 
         /// <summary>
